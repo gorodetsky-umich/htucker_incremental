@@ -32,6 +32,10 @@ class HTucker:
 
         # u is n1n2 x r5
         # v is n3n4 x r6
+
+        tucU = hosvd(u.reshape(tensor.shape[0],tensor.shape[1],-1, order='F'))
+        tucV = hosvd(v.reshape(-1, tensor.shape[2],tensor.shape[3], order='F'))
+
         
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
         
