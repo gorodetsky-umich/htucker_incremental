@@ -56,10 +56,10 @@ class TestCase(unittest.TestCase):
                 
         )
         
-                           
+
     def test_add_edge(self):
 
-        print("\n", self.tensor)
+        # print("\n", self.tensor)
         self.assertEqual(self.size[0], self.tensor.shape[0])
         self.assertEqual(self.size[1], self.tensor.shape[1])
         self.assertEqual(self.size[2], self.tensor.shape[2])
