@@ -31,6 +31,30 @@ class TestCase(unittest.TestCase):
         eval_right = np.einsum('ij,kl,ikr->jlr', leafs[2], leafs[3], transfer_tensors[1])
 
         self.tensor = np.einsum('ijk,lmn,kn->ijlm',eval_left, eval_right, root)
+        self.koldaTensor=np.array(
+            [
+                [
+                    [1,13],
+                    [4,16],
+                    [7,19],
+                    [10,22]
+                    ],
+                [
+                    [2,14],
+                    [5,17],
+                    [8,20],
+                    [11,23]
+                    ],
+                [
+                    [3,15],
+                    [6,18],
+                    [9,21],
+                    [12,24]
+                    ]
+                ]
+                
+        )
+        
                            
     def test_add_edge(self):
 
@@ -39,6 +63,12 @@ class TestCase(unittest.TestCase):
         self.assertEqual(self.size[1], self.tensor.shape[1])
         self.assertEqual(self.size[2], self.tensor.shape[2])
         self.assertEqual(self.size[3], self.tensor.shape[3])
+
+        # print("\n",self.koldaTensor.shape)
+        # # This is the way that one should compute the mode-n reshaping in the sense of Kolda!
+        # print(self.koldaTensor.reshape(3,8,order='F'))
+        # print(self.koldaTensor.transpose(1,0,2).reshape(4,6,order='F'))
+        # print(self.koldaTensor.transpose(2,0,1).reshape(2,12,order='F'))
         
         # assert all false
         self.assertTrue(True)
