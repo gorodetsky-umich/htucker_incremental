@@ -87,6 +87,30 @@ def createPermutations(nDims):
         firstDim=copyDimensions.pop(dim)
         permutations.append([firstDim]+copyDimensions)
     return permutations
+
+# def matrixTensorProduct(matrix,tensor,axes):
+    
+#     ax1,ax2=axes
+
+#     matrixShape=list(matrix.shape)
+#     tensorShape=list(tensor.shape)
+#     assert(matrixShape[ax1]==tensorShape[ax2])
+
+#     productShape=tensorShape.copy()
+
+#     tensorIndices=list(range(len(tensorShape)))
+
+#     order=tensorIndices.pop(ax2)
+#     tensorIndices=[order]+tensorIndices
+
+#     # tensor=tensor.transpose(tensorIndices).reshape(tensorShape[ax2],-1,order='F')
+#     tensor=np.tensordot(matrix,tensor,axes=[ax1,ax2])
+#     currentIndices=list(range(1,len(tensorShape)))
+#     currentIndices=currentIndices[:ax2]+[0]+currentIndices[ax2:]
+
+
+#     return None
+
         
 
         
