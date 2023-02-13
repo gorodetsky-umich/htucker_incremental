@@ -78,6 +78,15 @@ def hosvd(tensor):
 
     return tensor , leftSingularVectors
 
+def createPermutations(nDims):
+    # Creates permutations to compute the matricizations
+    permutations=[]
+    dimensionList=list(range(nDims))
+    for dim in dimensionList:
+        copyDimensions=dimensionList.copy()
+        firstDim=copyDimensions.pop(dim)
+        permutations.append([firstDim]+copyDimensions)
+    return permutations
         
 
         
