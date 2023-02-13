@@ -1,8 +1,9 @@
 import unittest
 import numpy as np
-
+import sys 
+sys.path.append('./')
 import htucker as ht
-
+# from ..algs import HTucker 
 
 seed = 2
 np.random.seed(seed)
