@@ -35,6 +35,29 @@ class HTucker:
         
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
         
+def hosvd(tensor):
+    
+    # ndims = len(tensor.shape)
+    ndims = 4
+
+    # Need to find a generalized way to compute the permutations later!
+    permutations = [
+        (0,1,2,3),
+        (1,0,2,3),
+        (2,0,1,3),
+        (3,0,1,2)
+        ]
+        
+    leftSingularVectors=[]
+    for dim , perm in enumerate(permutations):
+        tempTensor=tensor.transpose(perm).reshape(tensor.shape[dim],-1)
+        u, _, _ = np.linalg.svd(tempTensor,full_matrices=False)
+        leftSingularVectors.append(u)
+    
+    for dim , u in enumerate(leftSingularVectors):
+        tensor=np.tensordot(tensor, u.T, axes=(dim,0))
+
+    return tensor , leftSingularVectors
 
         
 
