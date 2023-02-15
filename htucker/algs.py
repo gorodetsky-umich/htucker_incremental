@@ -27,7 +27,10 @@ class HTucker:
                                          tensor.shape[2]*tensor.shape[3]), order='F')
 
         [u, s, v2] = np.linalg.svd(mat_tensor, full_matrices=True)
-
+        
+        u=u[:,:sum(s>=1e-8)]
+        v2=v2[:sum(s>=1e-8),:]
+        s=s[:sum(s>=1e-8)]
         v = np.dot(np.diag(s), v2)
 
         # u is n1n2 x r5
@@ -44,6 +47,7 @@ def hosvd(tensor):
     # ndims = len(tensor.shape)
     ndims = 3
     ndims = 4
+    ndims=len(tensor.shape)
 
     # Need to find a generalized way to compute the permutations later!
     permutations = [
