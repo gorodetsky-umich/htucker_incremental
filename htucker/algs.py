@@ -92,6 +92,16 @@ def createPermutations(nDims):
         permutations.append([firstDim]+copyDimensions)
     return permutations
 
+def modeNUnfolding(tensor,mode):
+    # Computes mode-n unfolding/matricization of a tensor in the sense of Kolda&Bader
+    # Assumes the mode is given in 0 indexed format
+    nDims = len(tensor.shape)
+    dims = [dim for dim in range(nDims)]
+    modeIdx = dims.pop(mode)
+    dims=[modeIdx]+dims
+    tensor=tensor.transpose(dims)
+    return tensor.reshape(tensor.shape[0],-1,order='F')
+
 # def matrixTensorProduct(matrix,tensor,axes):
     
 #     ax1,ax2=axes
