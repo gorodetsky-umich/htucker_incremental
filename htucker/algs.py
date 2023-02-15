@@ -27,7 +27,24 @@ def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=T
 
     return [u, s, v]
   
+class TuckerCore:
+    # Object for tucker cores. Planning to use it to create the recursive graph structure
+    def __init__(self,core=None, parent=None) -> None:
+        self.parent=parent
+        self.core=core
+        self.children=[]
+        self.dims=[]
+        self.ranks=[]
 
+        if parent is not None:
+            self._isroot=True
+        else:
+            self._isroot=False
+
+    def get_ranks(self):
+        if self.core is not None:
+            self.ranks=list(self.core.shape)
+        
 class HTucker:
 
     # harded for 4d first
@@ -36,10 +53,32 @@ class HTucker:
         self.transfer_nodes = [None]*2
         self.root = None
 
+    def initialize(self,tensor):
+        self.original_shape = list(tensor.shape)
+        self.leaves = [None]*len(self.originalShape)
+        self.transfer_nodes = [None]*(len(self.originalShape)-2) #Root node not included here
+        self.root = None
+        
+
+    def split_dimensions(dims):
+        n_dims=len(dims)
+        return dims[:n_dims//2],dims[n_dims//2:]
 
     def compress(self, tensor):
+        # TODO: Replace initial SVD with HOSVD
+        # TODO: Create a structure for the HT
+        # TODO: Make compress() function general for n-dimensional tensors
+        
+        dims=list(tensor.shape)
 
-        # split tensor
+        # initial split for the tensor
+        left,right=split_dimensions(dims)
+        
+        self.root=TuckerCore()
+
+                
+
+
         mat_tensor = np.reshape(tensor, (tensor.shape[0]*tensor.shape[1],
                                          tensor.shape[2]*tensor.shape[3]), order='F')
 
@@ -71,37 +110,23 @@ class HTucker:
         
         
 def hosvd(tensor):
-    
-    # ndims = len(tensor.shape)
-    ndims = 3
-    ndims = 4
     ndims=len(tensor.shape)
-
-    # Need to find a generalized way to compute the permutations later!
-    permutations = [
-        (0,1,2),
-        (1,0,2),
-        (2,0,1)
-        ]
-    permutations = [
-        (0,1,2,3),
-        (1,0,2,3),
-        (2,0,1,3),
-        (3,0,1,2)
-        ]
-    
-    # Found it. :)
     permutations=createPermutations(ndims)
 
     leftSingularVectors=[]
     singularValues=[]
+
+    # May replace this with a combination of mode-n unfolding and truncated svd
     for dim , perm in enumerate(permutations):
         # print(dim,perm)
         tempTensor=tensor.transpose(perm).reshape(tensor.shape[dim],-1)
-        [u, s, _] = np.linalg.svd(tempTensor,full_matrices=False)
+
+        # [u, s, v] = np.linalg.svd(tempTensor,full_matrices=False)
+        [u, s, v] = truncated_svd(tempTensor,truncation_tolerance=1e-8,full_matrices=False)
+
         # Automatic rank truncation, can later be replaced with the deltaSVD function
-        leftSingularVectors.append(u[:,:sum(s>=1e-8)])
-        singularValues.append(s)
+        leftSingularVectors.append(u)
+        # singularValues.append(s)
 
     
     for dim , u in enumerate(leftSingularVectors):

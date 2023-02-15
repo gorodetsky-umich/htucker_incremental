@@ -117,7 +117,7 @@ class TestCase(unittest.TestCase):
         
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
         
-        
+    # TODO: Write test for n-dimensional tucker  
         
         
 if __name__ == '__main__':
