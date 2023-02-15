@@ -7,9 +7,26 @@ import numpy as np
 import htucker as ht
 
 __all__ = [
-     "HTucker",
+    "HTucker",
+    "hosvd",
 ]
 
+def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=True, hermitian=False):
+
+    [u, s, v] = np.linalg.svd(a,
+                              full_matrices=full_matrices,
+                              compute_uv=compute_uv,
+                              hermitian=False)
+    if truncation_tolerance == None:
+        return [u, s, v]
+
+    trunc = sum(s>=truncation_tolerance)
+    u=u[:,:trunc]
+    s=s[:trunc]
+    v=v[:trunc,:]
+
+    return [u, s, v]
+  
 
 class HTucker:
 
@@ -26,21 +43,32 @@ class HTucker:
         mat_tensor = np.reshape(tensor, (tensor.shape[0]*tensor.shape[1],
                                          tensor.shape[2]*tensor.shape[3]), order='F')
 
-        [u, s, v2] = np.linalg.svd(mat_tensor, full_matrices=True)
+        # [u, s, v] = np.linalg.svd(mat_tensor, full_matrices=False)
+        [u, s, v] = truncated_svd(mat_tensor, 1e-8, full_matrices=False)
         
-        u=u[:,:sum(s>=1e-8)]
-        v2=v2[:sum(s>=1e-8),:]
-        s=s[:sum(s>=1e-8)]
-        v = np.dot(np.diag(s), v2)
+        # u=u[:,:sum(s>=1e-8)]
+        # u=u[:,:sum(s>=1e-8)]
+        # u=u[:,:sum(s>=1e-8)]
+        # v2=v2[:sum(s>=1e-8),:]
+        # s=s[:sum(s>=1e-8)]
+        # v = np.dot(np.diag(s), v2)
 
         # u is n1n2 x r5
         # v is n3n4 x r6
 
-        tucU = hosvd(u.reshape(tensor.shape[0],tensor.shape[1],-1, order='F'))
-        tucV = hosvd(v.reshape(-1, tensor.shape[2],tensor.shape[3], order='F'))
+        [core_l, lsv_l] = hosvd(u.reshape(tensor.shape[0],tensor.shape[1],-1, order='F'))
+        [core_r, lsv_r] = hosvd(v.reshape(-1, tensor.shape[2],tensor.shape[3], order='F'))
 
-        
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
+        core_l = np.einsum('ijk,lk->ijl', core_l, lsv_l[-1])
+        core_r = np.einsum('ijk,li->ljk', core_r, lsv_r[0])
+
+        # top = np.eye(u.shape[1])
+        top = np.diag(s)
+
+        return (lsv_l[0], lsv_l[1], lsv_r[1], lsv_r[2], core_l, core_r, top)
+        
+        
         
 def hosvd(tensor):
     

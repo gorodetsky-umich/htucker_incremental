@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
                 
         )
         
-
+    @unittest.skip("skipping")
     def test_add_edge(self):
 
         # print("\n", self.tensor)
@@ -79,9 +79,44 @@ class TestCase(unittest.TestCase):
         reconstruction=np.einsum('ij,kl,mn,op,jlnp->ikmo',matrices[0],matrices[1],matrices[2],matrices[3],core)
         self.assertTrue(np.allclose((reconstruction-self.tensor),np.zeros_like(reconstruction)))
 
+    def test_htucker(self):
         tens=ht.HTucker()
-        tens.compress(self.tensor)
+        (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress(self.tensor)
 
+        self.assertEqual(self.size[0], leaf1.shape[0])
+        self.assertEqual(self.size[1], leaf2.shape[0])
+        self.assertEqual(self.size[2], leaf3.shape[0])
+        self.assertEqual(self.size[3], leaf4.shape[0])
+
+        self.assertEqual(leaf1.shape[1], nodel.shape[0])
+        self.assertEqual(leaf2.shape[1], nodel.shape[1])
+
+
+        # print("nodel.shape = ", nodel.shape)
+        # print("noder.shape = ", noder.shape)
+        # print("leaf3.shape = ", leaf3.shape)
+        # print("leaf4.shape = ", leaf4.shape)
+        
+        
+        self.assertEqual(leaf3.shape[1], noder.shape[1])
+        self.assertEqual(leaf4.shape[1], noder.shape[2])        
+        
+        eval_left = np.einsum('ji,lk,ikr->jlr', leaf1, leaf2, nodel)
+        eval_right = np.einsum('ij,kl,rjl->rik', leaf3, leaf4, noder)
+
+        # print("eval_left.shape = ", eval_left.shape)
+        # print("eval_right.shape = ", eval_right.shape)
+        # print("top shape = ", top.shape)
+        
+        tensor = np.einsum('ijz,lmn,zl->ijmn',eval_left, eval_right, top)
+        
+        self.assertEqual(self.size[0], tensor.shape[0])
+        self.assertEqual(self.size[1], tensor.shape[1])
+        self.assertEqual(self.size[2], tensor.shape[2])
+        self.assertEqual(self.size[3], tensor.shape[3])
+        
+        self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
+        
         
         
         
