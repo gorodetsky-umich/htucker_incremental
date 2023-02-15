@@ -79,6 +79,8 @@ class TestCase(unittest.TestCase):
         reconstruction=np.einsum('ij,kl,mn,op,jlnp->ikmo',matrices[0],matrices[1],matrices[2],matrices[3],core)
         self.assertTrue(np.allclose((reconstruction-self.tensor),np.zeros_like(reconstruction)))
 
+        tens=ht.HTucker()
+        tens.compress(self.tensor)
 
         
         
