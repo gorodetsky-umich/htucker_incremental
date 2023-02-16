@@ -11,21 +11,6 @@ __all__ = [
     "hosvd",
 ]
 
-def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=True, hermitian=False):
-
-    [u, s, v] = np.linalg.svd(a,
-                              full_matrices=full_matrices,
-                              compute_uv=compute_uv,
-                              hermitian=False)
-    if truncation_tolerance == None:
-        return [u, s, v]
-
-    trunc = sum(s>=truncation_tolerance)
-    u=u[:,:trunc]
-    s=s[:trunc]
-    v=v[:trunc,:]
-
-    return [u, s, v]
   
 class TuckerCore:
     # Object for tucker cores. Planning to use it to create the recursive graph structure
@@ -59,11 +44,6 @@ class HTucker:
         self.transfer_nodes = [None]*(len(self.originalShape)-2) #Root node not included here
         self.root = None
         
-
-    def split_dimensions(dims):
-        n_dims=len(dims)
-        return dims[:n_dims//2],dims[n_dims//2:]
-
     def compress(self, tensor):
         # TODO: Replace initial SVD with HOSVD
         # TODO: Create a structure for the HT
@@ -108,6 +88,21 @@ class HTucker:
         return (lsv_l[0], lsv_l[1], lsv_r[1], lsv_r[2], core_l, core_r, top)
         
         
+def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=True, hermitian=False):
+
+    [u, s, v] = np.linalg.svd(a,
+                              full_matrices=full_matrices,
+                              compute_uv=compute_uv,
+                              hermitian=False)
+    if truncation_tolerance == None:
+        return [u, s, v]
+
+    trunc = sum(s>=truncation_tolerance)
+    u=u[:,:trunc]
+    s=s[:trunc]
+    v=v[:trunc,:]
+
+    return [u, s, v]
         
 def hosvd(tensor):
     ndims=len(tensor.shape)
@@ -148,6 +143,10 @@ def createPermutations(nDims):
         firstDim=copyDimensions.pop(dim)
         permutations.append([firstDim]+copyDimensions)
     return permutations
+
+def split_dimensions(dims):
+        n_dims=len(dims)
+        return dims[:n_dims//2],dims[n_dims//2:]
 
 def modeNUnfolding(tensor,mode):
     # Computes mode-n unfolding/matricization of a tensor in the sense of Kolda&Bader
