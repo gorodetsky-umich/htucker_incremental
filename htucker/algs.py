@@ -2,9 +2,10 @@
 
 
 import numpy as np
-
-
 import htucker as ht
+
+from math import ceil
+
 
 __all__ = [
     "HTucker",
@@ -14,21 +15,31 @@ __all__ = [
   
 class TuckerCore:
     # Object for tucker cores. Planning to use it to create the recursive graph structure
-    def __init__(self,core=None, parent=None) -> None:
+    def __init__(self,core=None, parent=None, dims=None) -> None:
         self.parent=parent
         self.core=core
-        self.children=[]
-        self.dims=[]
+        self.left=None
+        self.right=None
+        self.dims=dims
         self.ranks=[]
 
-        if parent is not None:
+        if parent is None:
             self._isroot=True
         else:
             self._isroot=False
 
+        self._isexpanded=False
+
     def get_ranks(self):
         if self.core is not None:
             self.ranks=list(self.core.shape)
+
+class TuckerLeaf:
+    def __init__(self, matrix=None, parent=None, dims=None) -> None:
+        self.parent=parent
+        self.matrix=matrix
+        self.dims=dims
+        if matrix is not None: self.rank=matrix.shape[1]
         
 class HTucker:
 
@@ -37,6 +48,8 @@ class HTucker:
         self.leaves = [None]*4
         self.transfer_nodes = [None]*2
         self.root = None
+        self.nodes2Expand=[]
+        self._iscompressed=False
 
     def initialize(self,tensor):
         self.original_shape = list(tensor.shape)
@@ -44,17 +57,66 @@ class HTucker:
         self.transfer_nodes = [None]*(len(self.originalShape)-2) #Root node not included here
         self.root = None
         
-    def compress(self, tensor):
-        # TODO: Replace initial SVD with HOSVD
-        # TODO: Create a structure for the HT
+    def compress(self, tensor, isroot=False):
+        # TODO: Replace initial SVD with HOSVD -> Done, Requires testing
+        # TODO: Create a structure for the HT -> 
         # TODO: Make compress() function general for n-dimensional tensors
+        # TODO: Write a reconstruct() function.
+        assert(self._iscompressed is False)
+        if self.root is None: isroot=True
+
         
         dims=list(tensor.shape)
 
         # initial split for the tensor
         left,right=split_dimensions(dims)
         
-        self.root=TuckerCore()
+        self.root=TuckerCore(dims=dims)
+
+        self.root.left=TuckerCore(parent=self.root, dims=left)
+        self.root.right=TuckerCore(parent=self.root, dims=right)
+        # Reshape initial tensor into a matrix for the first splt
+        tensor=tensor.reshape(np.prod(left),np.prod(right), order='F')
+        
+        self.root.core, self.root.left.core, self.root.right.core = hosvd(tensor)
+        # The reshapings below might be unnecessary, will look into those
+        self.root.left.core=self.root.left.core.reshape(left+[-1],order='F')
+        self.root.right.core=self.root.right.core.reshape(right+[-1],order='F')
+        self.root.get_ranks()
+
+        self.nodes2Expand.append(self.root.left)
+        self.nodes2Expand.append(self.root.right)
+
+        while self.nodes2Expand:
+
+            node=self.nodes2Expand.pop(0)
+            if len(node.dims)==1:
+                continue
+            left,right=split_dimensions(node.dims)
+
+
+
+            node.core=node.core.reshape((np.prod(left),np.prod(right),-1), order='F')
+            node.core, lsv1, lsv2, lsv3 = hosvd(node.core)
+            # Contract the third leaf with the tucker core for now
+            node.core=np.einsum('ijk,kl->ijl',node.core,lsv3)
+            if len(left)==1:
+                # i.e we have a leaf
+                node.left=TuckerLeaf(matrix=lsv1,parent=node, dims=left)
+            else:
+                node.left=TuckerCore(core=lsv1, parent=node, dims=left)
+                self.nodes2Expand.append(node.left)
+
+            if len(right)==1:
+                node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=left)
+            else:
+                node.right=TuckerCore(parent=node, dims=right)
+
+
+
+
+
+
 
                 
 
@@ -106,6 +168,11 @@ def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=T
         
 def hosvd(tensor):
     ndims=len(tensor.shape)
+
+    if ndims == 2:
+        [u, s, v] = truncated_svd(tensor, truncation_tolerance=1e-8, full_matrices=False)
+        return np.diag(s), u, v.T
+
     permutations=createPermutations(ndims)
 
     leftSingularVectors=[]
@@ -146,7 +213,7 @@ def createPermutations(nDims):
 
 def split_dimensions(dims):
         n_dims=len(dims)
-        return dims[:n_dims//2],dims[n_dims//2:]
+        return dims[:ceil(n_dims/2)],dims[ceil(n_dims/2):]
 
 def modeNUnfolding(tensor,mode):
     # Computes mode-n unfolding/matricization of a tensor in the sense of Kolda&Bader

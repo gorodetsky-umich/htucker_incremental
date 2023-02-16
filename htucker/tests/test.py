@@ -1,9 +1,7 @@
 import unittest
 import numpy as np
-import sys 
-sys.path.append('./')
+
 import htucker as ht
-# from ..algs import HTucker 
 
 seed = 2
 np.random.seed(seed)
@@ -72,7 +70,7 @@ class TestCase(unittest.TestCase):
         # print(self.koldaTensor.transpose(2,0,1).reshape(2,12,order='F'))
         
         # assert all false
-        self.assertTrue(True)
+        # self.assertTrue(True)
     
     def test_hosvd(self):
         core,matrices=ht.algs.hosvd(self.tensor)
@@ -118,7 +116,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
         
     # TODO: Write test for n-dimensional tucker  
-        
+    # TODO: Write test for n-mode unfolding
         
 if __name__ == '__main__':
     unittest.main()
