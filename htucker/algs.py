@@ -141,8 +141,15 @@ class HTucker:
         return None
     
     def reconstruct(self):
+        # The strategy is to start from the last core and work the way up to the root.
+        assert(self._iscompressed)
+        while self.transfer_nodes:
+            node=self.transfer_nodes.pop(-1)
+            node.contract_children()
+            
+        self.root.contract_children()
 
-
+        self._iscompressed=False
         return None
 
     def compress_sanity_check(self,tensor):
