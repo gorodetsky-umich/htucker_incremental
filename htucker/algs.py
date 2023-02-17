@@ -10,6 +10,10 @@ from math import ceil
 __all__ = [
     "HTucker",
     "hosvd",
+    "truncated_svd",
+    "create_permutations",
+    "split_dimensions",
+    "mode_n_unfolding"
 ]
 
   
