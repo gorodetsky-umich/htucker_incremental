@@ -108,8 +108,8 @@ class HTucker:
 
 
 
-            node.core=node.core.reshape((np.prod(left),np.prod(right),-1), order='F')
-            node.core, lsv1, lsv2, lsv3 = hosvd(node.core)
+            node.core = node.core.reshape((np.prod(left),np.prod(right),-1), order='F')
+            node.core, [lsv1, lsv2, lsv3] = hosvd(node.core)
             # Contract the third leaf with the tucker core for now
             node.core=np.einsum('ijk,kl->ijl',node.core,lsv3)
             if len(left)==1:
