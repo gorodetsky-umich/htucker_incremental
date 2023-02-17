@@ -79,15 +79,21 @@ class TestCase(unittest.TestCase):
 
     def test_htucker(self):
         tens=ht.HTucker()
-        (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress(self.tensor)
+        (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress_sanity_check(self.tensor)
+        tens.compress(self.tensor)
 
-        self.assertEqual(self.size[0], leaf1.shape[0])
-        self.assertEqual(self.size[1], leaf2.shape[0])
-        self.assertEqual(self.size[2], leaf3.shape[0])
-        self.assertEqual(self.size[3], leaf4.shape[0])
+        self.assertEqual(self.size[0], tens.leaves[0].matrix.shape[0])
+        self.assertEqual(self.size[1], tens.leaves[1].matrix.shape[0])
+        self.assertEqual(self.size[2], tens.leaves[2].matrix.shape[0])
+        self.assertEqual(self.size[3], tens.leaves[3].matrix.shape[0])
 
-        self.assertEqual(leaf1.shape[1], nodel.shape[0])
-        self.assertEqual(leaf2.shape[1], nodel.shape[1])
+        # Check rank consistency between left leaves and left core
+        self.assertEqual(tens.leaves[0].matrix.shape[1], tens.transfer_nodes[0].core.shape[0])
+        self.assertEqual(tens.leaves[1].matrix.shape[1], tens.transfer_nodes[0].core.shape[1])
+
+        # Check rank consistency between right leaves and right core
+        self.assertEqual(tens.leaves[2].matrix.shape[1], tens.transfer_nodes[1].core.shape[0])
+        self.assertEqual(tens.leaves[3].matrix.shape[1], tens.transfer_nodes[1].core.shape[1])
 
 
         # print("nodel.shape = ", nodel.shape)
@@ -96,22 +102,29 @@ class TestCase(unittest.TestCase):
         # print("leaf4.shape = ", leaf4.shape)
         
         
-        self.assertEqual(leaf3.shape[1], noder.shape[1])
-        self.assertEqual(leaf4.shape[1], noder.shape[2])        
+        # self.assertEqual(leaf3.shape[1], noder.shape[1])
+        # self.assertEqual(leaf4.shape[1], noder.shape[2])        
         
-        eval_left = np.einsum('ji,lk,ikr->jlr', leaf1, leaf2, nodel)
-        eval_right = np.einsum('ij,kl,rjl->rik', leaf3, leaf4, noder)
+        eval_left = np.einsum('ji,lk,ikr->jlr', tens.leaves[0].matrix, tens.leaves[1].matrix, tens.transfer_nodes[0].core)
+        eval_right = np.einsum('ij,kl,jlm->ikm',tens.leaves[2].matrix, tens.leaves[3].matrix, tens.transfer_nodes[1].core)
+
+        # eval_left = np.einsum('ji,lk,ikr->jlr', leaf1, leaf2, nodel)
+        # eval_right = np.einsum('ij,kl,rjl->rik', leaf3, leaf4, noder)
 
         # print("eval_left.shape = ", eval_left.shape)
         # print("eval_right.shape = ", eval_right.shape)
         # print("top shape = ", top.shape)
         
-        tensor = np.einsum('ijz,lmn,zl->ijmn',eval_left, eval_right, top)
+        tensor = np.einsum('ijk,lmn,kn->ijlm',eval_left, eval_right, tens.root.core)
         
         self.assertEqual(self.size[0], tensor.shape[0])
         self.assertEqual(self.size[1], tensor.shape[1])
         self.assertEqual(self.size[2], tensor.shape[2])
         self.assertEqual(self.size[3], tensor.shape[3])
+        self.assertTrue(np.allclose((leaf1-tens.leaves[0].matrix), np.zeros_like(leaf1)))
+        self.assertTrue(np.allclose((leaf2-tens.leaves[1].matrix), np.zeros_like(leaf2)))
+        self.assertTrue(np.allclose((leaf3-tens.leaves[2].matrix), np.zeros_like(leaf3)))
+        self.assertTrue(np.allclose((leaf4-tens.leaves[3].matrix), np.zeros_like(leaf4)))
         
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
         
