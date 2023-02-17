@@ -109,38 +109,42 @@ class TestCase(unittest.TestCase):
         # print(tensor-self.tensor)
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
 
+    def test_htucker_4d(self):
         tens=ht.HTucker()
         (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress_sanity_check(self.tensor)
         tens.compress(self.tensor)
 
-        self.assertEqual(self.size[0], tens.leaves[0].matrix.shape[0])
-        self.assertEqual(self.size[1], tens.leaves[1].matrix.shape[0])
-        self.assertEqual(self.size[2], tens.leaves[2].matrix.shape[0])
-        self.assertEqual(self.size[3], tens.leaves[3].matrix.shape[0])
+        self.assertEqual(self.size[0], tens.leaves[0].core.shape[0])
+        self.assertEqual(self.size[1], tens.leaves[1].core.shape[0])
+        self.assertEqual(self.size[2], tens.leaves[2].core.shape[0])
+        self.assertEqual(self.size[3], tens.leaves[3].core.shape[0])
 
         # Check rank consistency between left leaves and left core
-        self.assertEqual(tens.leaves[0].matrix.shape[1], tens.transfer_nodes[0].core.shape[0])
-        self.assertEqual(tens.leaves[1].matrix.shape[1], tens.transfer_nodes[0].core.shape[1])
+        self.assertEqual(tens.leaves[0].core.shape[1], tens.transfer_nodes[0].core.shape[0])
+        self.assertEqual(tens.leaves[1].core.shape[1], tens.transfer_nodes[0].core.shape[1])
 
         # Check rank consistency between right leaves and right core
-        self.assertEqual(tens.leaves[2].matrix.shape[1], tens.transfer_nodes[1].core.shape[0])
-        self.assertEqual(tens.leaves[3].matrix.shape[1], tens.transfer_nodes[1].core.shape[1])
+        self.assertEqual(tens.leaves[2].core.shape[1], tens.transfer_nodes[1].core.shape[0])
+        self.assertEqual(tens.leaves[3].core.shape[1], tens.transfer_nodes[1].core.shape[1])
 
+        # Check if the leaves are same for 4d case
+        self.assertTrue(np.allclose((leaf1-tens.leaves[0].core), np.zeros_like(leaf1)))
+        self.assertTrue(np.allclose((leaf2-tens.leaves[1].core), np.zeros_like(leaf2)))
+        self.assertTrue(np.allclose((leaf3-tens.leaves[2].core), np.zeros_like(leaf3)))
+        self.assertTrue(np.allclose((leaf4-tens.leaves[3].core), np.zeros_like(leaf4)))
 
-        # print("nodel.shape = ", nodel.shape)
-        # print("noder.shape = ", noder.shape)
-        # print("leaf3.shape = ", leaf3.shape)
-        # print("leaf4.shape = ", leaf4.shape)
-        
-        
+        # Check if the transfer cores are same for 4d case
+        # Note that we need to swap axes for the hardcoded version since we always
+        # keep the tucker rank at the last index
+        self.assertTrue(np.allclose((nodel-tens.transfer_nodes[0].core), np.zeros_like(nodel)))
+        self.assertTrue(np.allclose((noder.transpose(1,2,0)-tens.transfer_nodes[1].core), np.zeros_like(noder.transpose(1,2,0))))
+
         # self.assertEqual(leaf3.shape[1], noder.shape[1])
         # self.assertEqual(leaf4.shape[1], noder.shape[2])        
         
-        eval_left = np.einsum('ji,lk,ikr->jlr', tens.leaves[0].matrix, tens.leaves[1].matrix, tens.transfer_nodes[0].core)
-        eval_right = np.einsum('ij,kl,jlm->ikm',tens.leaves[2].matrix, tens.leaves[3].matrix, tens.transfer_nodes[1].core)
+        eval_left = np.einsum('ji,lk,ikr->jlr', tens.leaves[0].core, tens.leaves[1].core, tens.transfer_nodes[0].core)
+        eval_right = np.einsum('ij,kl,jlm->ikm',tens.leaves[2].core, tens.leaves[3].core, tens.transfer_nodes[1].core)
 
-        # eval_left = np.einsum('ji,lk,ikr->jlr', leaf1, leaf2, nodel)
-        # eval_right = np.einsum('ij,kl,rjl->rik', leaf3, leaf4, noder)
 
         # print("eval_left.shape = ", eval_left.shape)
         # print("eval_right.shape = ", eval_right.shape)
@@ -148,15 +152,13 @@ class TestCase(unittest.TestCase):
         
         tensor = np.einsum('ijk,lmn,kn->ijlm',eval_left, eval_right, tens.root.core)
         
+        # Check if we get the same shape as the original tensor
         self.assertEqual(self.size[0], tensor.shape[0])
         self.assertEqual(self.size[1], tensor.shape[1])
         self.assertEqual(self.size[2], tensor.shape[2])
         self.assertEqual(self.size[3], tensor.shape[3])
-        self.assertTrue(np.allclose((leaf1-tens.leaves[0].matrix), np.zeros_like(leaf1)))
-        self.assertTrue(np.allclose((leaf2-tens.leaves[1].matrix), np.zeros_like(leaf2)))
-        self.assertTrue(np.allclose((leaf3-tens.leaves[2].matrix), np.zeros_like(leaf3)))
-        self.assertTrue(np.allclose((leaf4-tens.leaves[3].matrix), np.zeros_like(leaf4)))
         
+        # Check if we get the same tensor as the original tensor
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
         
     # TODO: Write test for n-dimensional tucker  
