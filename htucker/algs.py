@@ -67,7 +67,7 @@ class HTucker:
     def compress(self, tensor, isroot=False):
         # TODO: Replace initial SVD with HOSVD -> Done, Requires testing
         # TODO: Create a structure for the HT -> 
-        # TODO: Make compress() function general for n-dimensional tensors
+        # TODO: Make compress() function general for n-dimensional tensors -> Done, need to check imbalanced trees (n=5)
         # TODO: Write a reconstruct() function.
         assert(self._iscompressed is False)
         if self.root is None: isroot=True
