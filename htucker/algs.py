@@ -38,6 +38,25 @@ class TuckerCore:
     def get_ranks(self):
         if self.core is not None:
             self.ranks=list(self.core.shape)
+    
+    def contract_children(self):
+        _ldims=len(self.left.dims)+1
+        _rdims=len(self.right.dims)+1
+        
+        left_str = ''.join([chr(idx) for idx in range(97,97+_ldims)])
+        right_str = ''.join([chr(idx) for idx in range(97+_ldims,97+_ldims+_rdims)])
+        if self._isroot:
+            core_str = left_str[-1]+right_str[-1]
+        else:    
+            core_str = left_str[-1]+right_str[-1]+chr(97+_ldims+_rdims)
+
+        result_str = core_str.replace(left_str[-1],left_str[:-1])
+        result_str = result_str.replace(right_str[-1],right_str[:-1])
+        self.core = np.einsum(
+            ','.join([left_str,right_str,core_str])+'->'+result_str,
+            self.left.core,self.right.core,self.core
+            )
+        pass
 
 class TuckerLeaf:
     def __init__(self, matrix=None, parent=None, dims=None, idx=None) -> None:
