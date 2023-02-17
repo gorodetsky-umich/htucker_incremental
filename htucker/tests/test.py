@@ -54,7 +54,7 @@ class TestCase(unittest.TestCase):
                 
         )
         
-    @unittest.skip("skipping")
+    @unittest.skip("add_edge")
     def test_add_edge(self):
 
         # print("\n", self.tensor)
