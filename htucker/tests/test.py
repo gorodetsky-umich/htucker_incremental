@@ -95,7 +95,20 @@ class TestCase(unittest.TestCase):
         reconstruction=np.einsum('ij,kl,mn,op,jlnp->ikmo',matrices[0],matrices[1],matrices[2],matrices[3],core)
         self.assertTrue(np.allclose((reconstruction-self.tensor),np.zeros_like(reconstruction)))
 
-    def test_htucker(self):
+    def test_htucker_sanity_check_4d(self):
+        tens=ht.HTucker()
+        (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress_sanity_check(self.tensor)
+        # print('\n')
+        # print(leaf1.shape,leaf2.shape,leaf3.shape,leaf4.shape)
+        # print(nodel.shape,noder.shape)
+        # print(top.shape)
+        eval_left = np.einsum('ji,lk,ikr->jlr', leaf1, leaf2, nodel)
+        eval_right = np.einsum('ij,kl,rjl->rik', leaf3, leaf4, noder)
+        # print(eval_left.shape,eval_right.shape)
+        tensor = np.einsum('ijk,lmn,kl->ijmn',eval_left, eval_right, top)
+        # print(tensor-self.tensor)
+        self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
+
         tens=ht.HTucker()
         (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress_sanity_check(self.tensor)
         tens.compress(self.tensor)
