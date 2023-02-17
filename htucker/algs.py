@@ -42,7 +42,7 @@ class TuckerCore:
 class TuckerLeaf:
     def __init__(self, matrix=None, parent=None, dims=None, idx=None) -> None:
         self.parent=parent
-        self.matrix=matrix
+        self.core=matrix #Refactoring this as core for consistency with TuckerCore
         self.dims=dims
         self.leaf_idx=idx
         if matrix is not None: self.rank=matrix.shape[1]
