@@ -91,8 +91,8 @@ class HTucker:
         
         self.root.core, self.root.left.core, self.root.right.core = hosvd(tensor)
         # The reshapings below might be unnecessary, will look into those
-        self.root.left.core=self.root.left.core.reshape(left+[-1],order='F')
-        self.root.right.core=self.root.right.core.reshape(right+[-1],order='F')
+        # self.root.left.core = self.root.left.core.reshape(left+[-1],order='F')
+        # self.root.right.core = self.root.right.core.reshape(right+[-1],order='F')
         self.root.get_ranks()
 
         self.nodes2Expand.append(self.root.left)
@@ -116,17 +116,23 @@ class HTucker:
             node.core_idx = _node_counter
             self.transfer_nodes[_node_counter] = node
             _node_counter += 1
+            
             if len(left)==1:
                 # i.e we have a leaf
-                node.left=TuckerLeaf(matrix=lsv1,parent=node, dims=left)
+                node.left=TuckerLeaf(matrix=lsv1,parent=node, dims=left, idx=_leaf_counter)
+                self.leaves[_leaf_counter]=node.left
+                _leaf_counter+=1
             else:
                 node.left=TuckerCore(core=lsv1, parent=node, dims=left)
                 self.nodes2Expand.append(node.left)
 
             if len(right)==1:
-                node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=left)
+                node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=left, idx=_leaf_counter)
+                self.leaves[_leaf_counter]=node.right
+                _leaf_counter+=1
             else:
                 node.right=TuckerCore(parent=node, dims=right)
+        
         self._iscompressed=True
         return None
     
