@@ -112,6 +112,10 @@ class HTucker:
             node.core, [lsv1, lsv2, lsv3] = hosvd(node.core)
             # Contract the third leaf with the tucker core for now
             node.core = np.einsum('ijk,lk->ijl',node.core,lsv3)
+            node._isexpanded = True
+            node.core_idx = _node_counter
+            self.transfer_nodes[_node_counter] = node
+            _node_counter += 1
             if len(left)==1:
                 # i.e we have a leaf
                 node.left=TuckerLeaf(matrix=lsv1,parent=node, dims=left)
@@ -123,8 +127,8 @@ class HTucker:
                 node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=left)
             else:
                 node.right=TuckerCore(parent=node, dims=right)
-
-
+        self._iscompressed=True
+        return None
 
 
 
