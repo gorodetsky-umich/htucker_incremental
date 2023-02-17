@@ -91,7 +91,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(np.allclose((mode2-mode2kolda),np.zeros_like(mode2)))
     
     def test_hosvd(self):
-        core,matrices=ht.algs.hosvd(self.tensor)
+        core,matrices=ht.hosvd(self.tensor)
         reconstruction=np.einsum('ij,kl,mn,op,jlnp->ikmo',matrices[0],matrices[1],matrices[2],matrices[3],core)
         self.assertTrue(np.allclose((reconstruction-self.tensor),np.zeros_like(reconstruction)))
 
