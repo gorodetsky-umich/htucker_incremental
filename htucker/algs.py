@@ -245,7 +245,7 @@ def hosvd(tensor):
 
     return tensor , leftSingularVectors
 
-def createPermutations(nDims):
+def create_permutations(nDims):
     # Creates permutations to compute the matricizations
     permutations=[]
     dimensionList=list(range(nDims))
