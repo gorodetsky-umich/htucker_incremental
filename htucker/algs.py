@@ -129,9 +129,11 @@ class HTucker:
                 node.right=TuckerCore(parent=node, dims=right)
         self._iscompressed=True
         return None
+    
+    def reconstruct(self):
 
 
-
+        return None
 
 
                 
