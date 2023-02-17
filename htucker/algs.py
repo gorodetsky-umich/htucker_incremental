@@ -101,8 +101,9 @@ class HTucker:
         while self.nodes2Expand:
 
             node=self.nodes2Expand.pop(0)
-            if len(node.dims)==1:
-                continue
+            # if len(node.dims)==1:
+            #     print(node.dims)
+            #     continue
             left,right=split_dimensions(node.dims)
 
 
