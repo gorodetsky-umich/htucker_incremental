@@ -63,14 +63,32 @@ class TestCase(unittest.TestCase):
         self.assertEqual(self.size[2], self.tensor.shape[2])
         self.assertEqual(self.size[3], self.tensor.shape[3])
 
-        # print("\n",self.koldaTensor.shape)
-        # # This is the way that one should compute the mode-n reshaping in the sense of Kolda!
-        # print(self.koldaTensor.reshape(3,8,order='F'))
-        # print(self.koldaTensor.transpose(1,0,2).reshape(4,6,order='F'))
-        # print(self.koldaTensor.transpose(2,0,1).reshape(2,12,order='F'))
-        
-        # assert all false
-        # self.assertTrue(True)
+    # @unittest.skip("mode-n unfolding")        
+    def test_kolda_unfolding(self):
+        mode0=ht.mode_n_unfolding(self.koldaTensor,0)
+        mode1=ht.mode_n_unfolding(self.koldaTensor,1)
+        mode2=ht.mode_n_unfolding(self.koldaTensor,2)
+
+        # TODO: Write assert statements for dimensions!
+
+        mode0kolda=np.array([
+            [1,4,7,10,13,16,19,22],
+            [2,5,8,11,14,17,20,23],
+            [3,6,9,12,15,18,21,24]
+            ])
+        mode1kolda=np.array([
+            [1,2,3,13,14,15],
+            [4,5,6,16,17,18],
+            [7,8,9,19,20,21],
+            [10,11,12,22,23,24]
+        ])
+        mode2kolda=np.array([
+            [1,2,3,4,5,6,7,8,9,10,11,12],
+            [13,14,15,16,17,18,19,20,21,22,23,24]
+        ])
+        self.assertTrue(np.allclose((mode0-mode0kolda),np.zeros_like(mode0)))
+        self.assertTrue(np.allclose((mode1-mode1kolda),np.zeros_like(mode1)))
+        self.assertTrue(np.allclose((mode2-mode2kolda),np.zeros_like(mode2)))
     
     def test_hosvd(self):
         core,matrices=ht.algs.hosvd(self.tensor)
