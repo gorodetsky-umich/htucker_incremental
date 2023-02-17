@@ -160,7 +160,13 @@ class TestCase(unittest.TestCase):
         
         # Check if we get the same tensor as the original tensor
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
-        
+    
+    def test_reconstruct_4d(self):
+        tens=ht.HTucker()
+        tens.compress(self.tensor)
+        tens.reconstruct()
+        np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor))
+
     # TODO: Write test for n-dimensional tucker  
     # TODO: Write test for n-mode unfolding
         
