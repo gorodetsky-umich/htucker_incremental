@@ -167,8 +167,8 @@ class TestCase(unittest.TestCase):
         tens.reconstruct()
         np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor))
 
+    # TODO: Write test for n-mode unfolding -> Done
     # TODO: Write test for n-dimensional tucker  
-    # TODO: Write test for n-mode unfolding
         
 if __name__ == '__main__':
     unittest.main()
