@@ -47,17 +47,22 @@ class HTucker:
 
     # harded for 4d first
     def __init__(self):
-        self.leaves = [None]*4
-        self.transfer_nodes = [None]*2
+        self._leaf_count=4
+        self.leaves = [None]*self._leaf_count
+        self.transfer_nodes = [None]*(self._leaf_count-2)
         self.root = None
         self.nodes2Expand=[]
         self._iscompressed=False
 
     def initialize(self,tensor):
         self.original_shape = list(tensor.shape)
-        self.leaves = [None]*len(self.originalShape)
-        self.transfer_nodes = [None]*(len(self.originalShape)-2) #Root node not included here
+        self._leaf_count=len(self.original_shape)
+        self.leaves = [None]*self._leaf_count
+        self.transfer_nodes = [None]*(self._leaf_count-2) #Root node not included here
         self.root = None
+        self.nodes2Expand = []
+        self._iscompressed = False
+
         
     def compress(self, tensor, isroot=False):
         # TODO: Replace initial SVD with HOSVD -> Done, Requires testing
