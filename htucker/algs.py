@@ -36,10 +36,11 @@ class TuckerCore:
             self.ranks=list(self.core.shape)
 
 class TuckerLeaf:
-    def __init__(self, matrix=None, parent=None, dims=None) -> None:
+    def __init__(self, matrix=None, parent=None, dims=None, idx=None) -> None:
         self.parent=parent
         self.matrix=matrix
         self.dims=dims
+        self.leaf_idx=idx
         if matrix is not None: self.rank=matrix.shape[1]
         
 class HTucker:
