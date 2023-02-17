@@ -70,6 +70,10 @@ class HTucker:
         # TODO: Make compress() function general for n-dimensional tensors -> Done, need to check imbalanced trees (n=5)
         # TODO: Write a reconstruct() function.
         assert(self._iscompressed is False)
+        _leaf_counter=0
+        _node_counter=0
+
+        #this if check looks unnecessary
         if self.root is None: isroot=True
 
         
