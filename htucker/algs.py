@@ -135,37 +135,27 @@ class HTucker:
 
         return None
 
-
-                
-
+    def compress_sanity_check(self,tensor):
+        # Commenting out below for now, might be needed later for checking
 
         mat_tensor = np.reshape(tensor, (tensor.shape[0]*tensor.shape[1],
                                          tensor.shape[2]*tensor.shape[3]), order='F')
 
-        # [u, s, v] = np.linalg.svd(mat_tensor, full_matrices=False)
         [u, s, v] = truncated_svd(mat_tensor, 1e-8, full_matrices=False)
-        
-        # u=u[:,:sum(s>=1e-8)]
-        # u=u[:,:sum(s>=1e-8)]
-        # u=u[:,:sum(s>=1e-8)]
-        # v2=v2[:sum(s>=1e-8),:]
-        # s=s[:sum(s>=1e-8)]
-        # v = np.dot(np.diag(s), v2)
-
-        # u is n1n2 x r5
-        # v is n3n4 x r6
-
         [core_l, lsv_l] = hosvd(u.reshape(tensor.shape[0],tensor.shape[1],-1, order='F'))
         [core_r, lsv_r] = hosvd(v.reshape(-1, tensor.shape[2],tensor.shape[3], order='F'))
 
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
+        # print("\n",core_l)
+        # print("\n",lsv_l[-1])
         core_l = np.einsum('ijk,lk->ijl', core_l, lsv_l[-1])
         core_r = np.einsum('ijk,li->ljk', core_r, lsv_r[0])
-
-        # top = np.eye(u.shape[1])
+        # print("\n",core_l)
+        # print("\n",core_r)
         top = np.diag(s)
-
         return (lsv_l[0], lsv_l[1], lsv_r[1], lsv_r[2], core_l, core_r, top)
+
+
         
         
 def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=True, hermitian=False):
