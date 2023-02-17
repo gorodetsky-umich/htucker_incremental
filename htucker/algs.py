@@ -217,7 +217,7 @@ def hosvd(tensor):
         [u, s, v] = truncated_svd(tensor, truncation_tolerance=1e-8, full_matrices=False)
         return np.diag(s), u, v.T
 
-    permutations=createPermutations(ndims)
+    permutations=create_permutations(ndims)
 
     leftSingularVectors=[]
     singularValues=[]
@@ -259,7 +259,7 @@ def split_dimensions(dims):
         n_dims=len(dims)
         return dims[:ceil(n_dims/2)],dims[ceil(n_dims/2):]
 
-def modeNUnfolding(tensor,mode):
+def mode_n_unfolding(tensor,mode):
     # Computes mode-n unfolding/matricization of a tensor in the sense of Kolda&Bader
     # Assumes the mode is given in 0 indexed format
     nDims = len(tensor.shape)
