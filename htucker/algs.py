@@ -15,12 +15,13 @@ __all__ = [
   
 class TuckerCore:
     # Object for tucker cores. Planning to use it to create the recursive graph structure
-    def __init__(self,core=None, parent=None, dims=None) -> None:
+    def __init__(self,core=None, parent=None, dims=None, idx=None) -> None:
         self.parent=parent
         self.core=core
         self.left=None
         self.right=None
         self.dims=dims
+        self.core_idx=idx
         self.ranks=[]
 
         if parent is None:
