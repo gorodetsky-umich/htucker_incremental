@@ -2,3 +2,6 @@ build*
 *~
 *.pyc
 *.egg-info*
+htucker/bin/*
+htucker/lib*/*
+htucker/share/*

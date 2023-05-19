@@ -58,6 +58,9 @@ class TuckerCore:
             )
         pass
 
+    @property
+    def shape(self):
+        return self.core.shape
 class TuckerLeaf:
     def __init__(self, matrix=None, parent=None, dims=None, idx=None) -> None:
         self.parent=parent
