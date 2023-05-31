@@ -58,6 +58,44 @@ class TuckerCore:
             )
         pass
 
+    def contract_children_dimension_tree(self):
+        dimensions=[]
+        matrices=[]
+        for chld in self.children:
+            if type(chld) is ht.TuckerLeaf:
+                dimensions.append(2)
+            else:
+                dimensions.append(len(chld.dims)+1)
+            matrices.append(chld.core)
+        matrices.append(self.core)
+        strings=[]
+        core_string=""
+        last_char=97
+        for dims in dimensions:
+            strings.append(''.join([chr(idx) for idx in range(last_char,last_char+dims)]))
+            last_char+=dims
+            core_string += strings[-1][-1]
+        core_string+=chr(last_char)
+        result_string=""
+        for stri in strings:
+            result_string += stri[:-1]
+        result_string+=core_string[-1]
+        if self.parent is not None:
+            pass
+        else: #We are contracting the root node
+            # We need to adjust the einstein summation strings for root node
+            result_string, core_string = result_string[:-1],core_string[:-1]
+        self.core = eval(
+            "np.einsum("+
+            "'"+
+            ",".join([
+                ','.join(strings+[core_string])+'->'+result_string+"'",
+                ",".join([f"matrices[{idx}]" for idx in range(len(matrices))]),
+                'optimize=True']
+            )+
+            ")"
+        )
+
     @property
     def shape(self):
         return self.core.shape
