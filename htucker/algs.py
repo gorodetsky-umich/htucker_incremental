@@ -194,6 +194,14 @@ class HTucker:
         top = np.diag(s)
         return (lsv_l[0], lsv_l[1], lsv_r[1], lsv_r[2], core_l, core_r, top)
 
+    @property
+    def compression_ratio(self):
+        num_entries=np.prod(self.root.shape)
+        for tf in self.transfer_nodes:
+            num_entries+=np.prod(tf.shape)
+        for lf in self.leaves:
+            num_entries+=np.prod(lf.shape)
+        return np.prod(self.original_shape)/num_entries
 
         
         
