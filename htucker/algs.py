@@ -62,7 +62,7 @@ class TuckerCore:
         result_str = result_str.replace(right_str[-1],right_str[:-1])
         self.core = np.einsum(
             ','.join([left_str,right_str,core_str])+'->'+result_str,
-            self.left.core,self.right.core,self.core
+            self.left.core,self.right.core,self.core,optimize=True
             )
         pass
 
@@ -188,7 +188,7 @@ class HTucker:
             node.core = node.core.reshape((np.prod(left),np.prod(right),-1), order='F')
             node.core, [lsv1, lsv2, lsv3] = hosvd(node.core)
             # Contract the third leaf with the tucker core for now
-            node.core = np.einsum('ijk,lk->ijl',node.core,lsv3)
+            node.core = np.einsum('ijk,lk->ijl',node.core,lsv3,optimize=True)
             node._isexpanded = True
             node.core_idx = _node_counter
             self.transfer_nodes[_node_counter] = node
@@ -364,8 +364,8 @@ class HTucker:
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
         # print("\n",core_l)
         # print("\n",lsv_l[-1])
-        core_l = np.einsum('ijk,lk->ijl', core_l, lsv_l[-1])
-        core_r = np.einsum('ijk,li->ljk', core_r, lsv_r[0])
+        core_l = np.einsum('ijk,lk->ijl', core_l, lsv_l[-1],optimize=True)
+        core_r = np.einsum('ijk,li->ljk', core_r, lsv_r[0],optimize=True)
         # print("\n",core_l)
         # print("\n",core_r)
         top = np.diag(s)
