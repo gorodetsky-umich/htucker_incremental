@@ -293,6 +293,23 @@ def mode_n_unfolding(tensor,mode):
 #     currentIndices=currentIndices[:ax2]+[0]+currentIndices[ax2:]
 
 
+class Node:
+    def __init__(self, val, children=None, parent=None) -> None:
+        self.children = children or []
+        self.val = val
+        self.parent = parent
+        self.real_children = []
+        self.real_parent = []
+        self.real_node = None
+        self._ranks = []
+        self._propagated = False
+        self._isleaf = False
+        self._level = None
+        self._dimension_index = None
+
+    def __str__(self) -> str:
+        return self.children
+    
 class Tree:
     def __init__(self) -> None:
         self.root = None
