@@ -211,7 +211,129 @@ class TestCase(unittest.TestCase):
         tens.initialize(self.tensor)
         tens.compress_root2leaf(self.tensor)
         tens.reconstruct()
-        np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor))
+def create_nway_tensor(num_dim=None, dims=None):
+    # Creates a random n-dimensional tensor
+    if num_dim is None:
+        num_dim = random.randint(4,7)
+    # print(num_dim)
+
+    if dims is None:
+        dims = [random.randint(2,10) for _ in range(num_dim)]
+    # print(dims)
+
+    leaf_ranks = [random.randint(2,max_rank) for max_rank in dims]
+    # print(leaf_ranks)
+
+    num_transfer_nodes = num_dim-2
+    transfer_ranks = [random.randint(min(leaf_ranks),max(leaf_ranks)) for _ in range(num_transfer_nodes)]
+    
+    # print("Initial transfer ranks:")
+    # print(transfer_ranks)
+    if len(transfer_ranks)<6:
+        transfer_ranks.extend(leaf_ranks[len(transfer_ranks)-6:])
+    # print("Transfer ranks after completing to a minimum of 6:")
+    # print(transfer_ranks)
+
+
+    # leafs = [np.random.randn(r, n) for r,n in zip(leaf_ranks, dims)]
+
+    l_dims,r_dims=ht.split_dimensions(dims)
+
+    l_root_rank=transfer_ranks.pop(0)
+    r_root_rank=transfer_ranks.pop(0)
+    root=ht.TuckerCore(core=np.random.randn(l_root_rank,r_root_rank),dims=dims)
+
+    l_rank=transfer_ranks.pop(0)
+    r_rank=transfer_ranks.pop(0)
+    root.left=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,l_root_rank),parent=root,dims=l_dims)
+
+
+    l_rank=transfer_ranks.pop(0)
+    r_rank=transfer_ranks.pop(0)
+    root.right=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,r_root_rank),parent=root,dims=r_dims)
+
+
+    completed_cores = []
+    completed_cores.append(root)
+    completed_cores.append(root.left)
+    completed_cores.append(root.right)
+
+    transfer_cores = []
+    transfer_cores.append(root.left)
+    transfer_cores.append(root.right)
+
+
+    while transfer_cores:
+        node=transfer_cores.pop(-1)
+        node.get_ranks()
+
+        l_dims,r_dims=ht.split_dimensions(node.dims)
+
+
+        # Create right child of the current node
+        if len(r_dims)==1:
+            leaf_rank=node.ranks[1]
+            leaf_dim=r_dims[0]
+            # print(leaf_rank,leaf_dim)
+            node.right=ht.TuckerLeaf(matrix=np.random.randn(leaf_dim,leaf_rank),parent=node,dims=r_dims)
+
+        elif len(r_dims)==2:
+            r_rank=leaf_ranks.pop(-1)
+            l_rank=leaf_ranks.pop(-1)
+            node.right=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[1]),parent=node,dims=r_dims)
+            transfer_cores.insert(0,node.right)
+            completed_cores.append(node.right)
+
+        elif len(r_dims)==3:
+            r_rank=leaf_ranks.pop(-1)
+            l_rank=transfer_ranks.pop(0)
+            node.right=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[1]),parent=node,dims=r_dims)
+            transfer_cores.insert(0,node.right)
+            completed_cores.append(node.right)
+
+        else:
+            l_rank=transfer_ranks.pop(0)
+            r_rank=transfer_ranks.pop(0)
+            node.right=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[1]),parent=node,dims=r_dims)
+            transfer_cores.insert(0,node.right)
+            completed_cores.append(node.right)
+
+        # Create left child of the current node
+        if len(l_dims)==1:
+            leaf_rank=node.ranks[0]
+            leaf_dim=l_dims[0]
+            # print(leaf_rank,leaf_dim)
+            node.left=ht.TuckerLeaf(matrix=np.random.randn(leaf_dim,leaf_rank),parent=node,dims=l_dims)
+
+        elif len(l_dims)==2:
+            r_rank=leaf_ranks.pop(-1)
+            l_rank=leaf_ranks.pop(-1)
+            node.left=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[0]),parent=node,dims=l_dims)
+            transfer_cores.insert(0,node.left)
+            completed_cores.append(node.left)
+
+        elif len(l_dims)==3:
+            r_rank=leaf_ranks.pop(-1)
+            l_rank=transfer_ranks.pop(0)
+            node.left=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[0]),parent=node,dims=l_dims)
+            transfer_cores.insert(0,node.left)
+            completed_cores.append(node.left)
+
+        else:
+            l_rank=transfer_ranks.pop(0)
+            r_rank=transfer_ranks.pop(0)
+            node.left=ht.TuckerCore(core=np.random.randn(l_rank,r_rank,node.ranks[0]),parent=node,dims=l_dims)
+            transfer_cores.insert(0,node.left)
+            completed_cores.append(node.left)
+
+    transfer_cores=completed_cores.copy()
+
+    # Contract created nodes to a tensor
+    while completed_cores:
+        node=completed_cores.pop(-1)
+        node.contract_children()
+
+    return node.core
 
     # TODO: Write test for n-mode unfolding -> Done
     # TODO: Write test for n-dimensional tucker  
