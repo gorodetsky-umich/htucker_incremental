@@ -325,6 +325,40 @@ class Tree:
         else:
             warn("Root node already implemented! Doing nothing.")
 
+    def insertNode(self, val, parent=None, dim_index=None):
+        newNode = Node(val)
+        newNode._dimension_index=dim_index
+        if parent is None: # No parent is given, i.e. Root node
+            self.root = newNode
+            self._depth = 1
+            self._size = 1
+            newNode._level = 0
+            newNode.adjust_ranks()
+        elif type(parent) is Node: # Parent is given directly as a node object
+            parent.children.append(newNode)
+            parent._propagated = True
+            # parent._ranks+=[None]
+            self._size += 1
+            newNode.parent = parent
+            newNode._level = parent._level+1
+            parent.adjust_ranks()
+        else: # Key/dimensions of the parent is given as input
+            parentNode = self.findNode(self.root, parent)
+            if not (parentNode):
+                raise NotFoundError(f"No parent was found for parent name: {parent}")
+            parentNode.children.append(newNode)
+            parentNode._propagated = True
+            # parentNode._ranks+=[None]
+            self._size += 1
+            newNode.parent = parentNode
+            newNode._level = parentNode._level+1
+            parentNode.adjust_ranks()
+        if len(val)==1:
+            newNode._isleaf = True
+            newNode.adjust_ranks()
+            self._leaves.append(newNode)
+            self._leafCount+=1
+
 #     return None
 
         
