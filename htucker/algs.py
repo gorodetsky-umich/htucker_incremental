@@ -371,6 +371,17 @@ class Tree:
                 self._depth = depth
         return None
                 
+    def get_items_from_level(self):
+        self._level_items=[]
+        for _ in range(self._depth+1):
+            self._level_items.append([])
+        # for depth,items in enumerate(level_items):
+        nodes2expand=[self.root]
+        while nodes2expand:
+            node = nodes2expand.pop(0)
+            nodes2expand.extend(node.children)
+            self._level_items[node._level].append(node)
+
 #     return None
 
         
