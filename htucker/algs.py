@@ -312,6 +312,9 @@ class Tree:
                 return return_node
         return None
 
+    def isEmpty(self):
+        return self._size == 0
+
 #     return None
 
         
