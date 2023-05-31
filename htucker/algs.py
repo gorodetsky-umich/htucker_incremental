@@ -27,6 +27,7 @@ class TuckerCore:
         self.dims=dims
         self.core_idx=idx
         self.ranks=[]
+        self.children = []
 
         if parent is None:
             self._isroot=True
