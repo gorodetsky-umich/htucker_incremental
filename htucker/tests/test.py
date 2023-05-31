@@ -209,11 +209,14 @@ class TestCase(unittest.TestCase):
         # Check if we get the same tensor as the original tensor
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
     
+    def test_root2leaf_reconstruct_4d(self):
         np.random.seed(seed)
         tens=ht.HTucker()
         tens.initialize(self.tensor)
         tens.compress_root2leaf(self.tensor)
         tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor)))
+        
     def test_leaf2root_reconstruct_4d(self):
         np.random.seed(seed)
         tens=ht.HTucker()
@@ -224,6 +227,16 @@ class TestCase(unittest.TestCase):
         tens.reconstruct()
         self.assertTrue(np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor)))
     
+    def test_root2leaf_reconstruct_6d(self):
+        np.random.seed(seed)
+        # tensor = create_nway_tensor(num_dim=6)
+        tensor = self.tensor6d
+        tens=ht.HTucker()
+        tens.initialize(tensor)
+        tens.compress_root2leaf(tensor)
+        tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
+
     def test_leaf2root_reconstruct_7d(self):
         np.random.seed(seed)
         # tensor = create_nway_tensor(num_dim=7)
@@ -248,6 +261,16 @@ class TestCase(unittest.TestCase):
         tens.reconstruct()
         self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
 
+    def test_root2leaf_reconstruct_7d(self):
+        np.random.seed(seed)
+        # tensor = create_nway_tensor(num_dim=7)
+        tensor = self.tensor7d
+        tens=ht.HTucker()
+        tens.initialize(tensor)
+        tens.compress_root2leaf(tensor)
+        tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
+        
 def create_nway_tensor(num_dim=None, dims=None):
     np.random.seed(seed)
     # Creates a random n-dimensional tensor
