@@ -1,10 +1,13 @@
 import unittest
+import random
+
 import numpy as np
 
 import htucker as ht
 
-seed = 2
+seed =1905
 np.random.seed(seed)
+random.seed(seed)
         
 class TestCase(unittest.TestCase):
 
@@ -206,7 +209,7 @@ class TestCase(unittest.TestCase):
         # Check if we get the same tensor as the original tensor
         self.assertTrue(np.allclose((tensor-self.tensor),np.zeros_like(tensor)))
     
-    def test_reconstruct_4d(self):
+        np.random.seed(seed)
         tens=ht.HTucker()
         tens.initialize(self.tensor)
         tens.compress_root2leaf(self.tensor)
@@ -246,6 +249,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
 
 def create_nway_tensor(num_dim=None, dims=None):
+    np.random.seed(seed)
     # Creates a random n-dimensional tensor
     if num_dim is None:
         num_dim = random.randint(4,7)
