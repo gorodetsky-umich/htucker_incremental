@@ -203,11 +203,125 @@ class HTucker:
                 self.leaves[_leaf_counter]=node.right
                 _leaf_counter+=1
             else:
-                node.right=TuckerCore(parent=node, dims=right)
+    def compress_leaf2root(self,tensor=None,dimension_tree=None):
+        assert(self._iscompressed is False)
+        if tensor is None:
+            raise NotFoundError("No tensor is given. Please check if you provided correct input(s)")
+        if (self._dimension_tree is None) and (dimension_tree is None):
+            warn("No dimension tree is given, creating one with binary splitting now...")
+            self._dimension_tree = createDimensionTree(tensor,2,1)
+        else:
+            self._dimension_tree = dimension_tree
         
+        ## Start with initial HOSVD to get the initial set of leaves
+        existing_leaves=[]
+        existing_nodes=[]
+        node_idx = self._dimension_tree._nodeCount-1
+
+        _ , leafs = hosvd(tensor)
+        for li in self._dimension_tree._level_items[-1]:
+            if li._isleaf:
+                leaf_idx=li._dimension_index[0]
+                self.leaves[leaf_idx]=ht.TuckerLeaf(matrix=leafs[leaf_idx],dims=li.val[0],idx=leaf_idx)
+                li._ranks[0]=self.leaves[leaf_idx].shape[-1]
+                li.real_node = self.leaves[leaf_idx]
+                li.parent._ranks[li.parent._ranks.index(None)]=li.real_node.rank
+        for lf in self.leaves:
+            if (lf is not None) and (lf not in existing_leaves):
+                existing_leaves.append(lf)
+                tensor = mode_n_product(tensor,lf.core,[lf.leaf_idx,0])
+
+
+        ## Niye last layer'i kaydettigini hatirla
+        ## Sanirim mevcut layerin bir onceki layerla baglantisini yapmak icin var burada last layer
+    
+        last_layer=self._dimension_tree._level_items[-1]
+        
+        for layer in self._dimension_tree._level_items[1:-1][::-1]:
+            new_shape=[]
+            # burada ilk pass hangi dimensionun hangi dimensionla birlesecegini anlamak icin var
+            for item in layer:
+                print(item._isleaf,item._ranks,item.val,item._dimension_index)
+                if item._isleaf:
+                    new_shape.append(item.val[0])
+                else:
+                    for chld in item.children:
+                        item.real_children.append(chld.real_node)
+                    new_shape.append(np.prod(list(filter(lambda item: item is not None, item._ranks))))
+            # dimension contractionun nasil olacagini planladiktan sonra reshape et ve HOSVD hesapla
+            # if len(new_shape)>1:
+            tensor=tensor.reshape(new_shape,order="F")
+            _ , leafs = hosvd(tensor)
+            # else:
+                # We are at the first level 
+                # leafs = [tensor]
+            # HOSVD hesaplandiktan sonra left singular vectorleri ilgili dimensionlarla contract etmek gerekiyor
+            for item_idx, item in enumerate(layer):
+                # LSV'leri ilgili dimensionlarla contract et
+                # if len(layer)>1:
+                tensor = mode_n_product(tensor,leafs[item_idx],[item_idx,0])
+                # else:
+                #     pass
+                if item._isleaf:
+                    # The current item is a leaf.
+                    leaf_idx=item._dimension_index[0]
+                    lf=ht.TuckerLeaf(matrix=leafs[item_idx],dims=item.val[0],idx=leaf_idx)
+                    self.leaves[leaf_idx]=lf
+                    item.real_node=lf
+                    item._ranks[0] = lf.rank
+                    item.parent._ranks[item.parent._ranks.index(None)] = lf.rank
+                    pass
+                else:
+                    # The current item is a transfer node.
+                    # Create tucker core and insert the transfer tensor.
+                    item._ranks[item._ranks.index(None)]=leafs[item_idx].shape[-1]
+                    item.parent._ranks[item.parent._ranks.index(None)]=leafs[item_idx].shape[-1]
+                    # new_shape = 
+                    node = ht.TuckerCore(
+                        core=leafs[item_idx].reshape(item._ranks,order="F"),
+                        dims=item.val.copy(),
+                        idx=item._dimension_index.copy()
+                        )
+                    self.transfer_nodes[node_idx]=node
+                    node._isexpanded = True
+                    node_idx -=1
+                    if len(layer) !=1: node._isroot = False
+                    # Create 
+                    # item.parent.real_children.append(node)
+                    item.real_node = node
+                    for chld in item.real_children:
+                        node.children.append(chld)
+                        chld.parent = node
+                    for chld in item.children:
+                        chld.real_parent = node
+                    # self.transfer_nodes
+                    node.get_ranks()
+                    # np.prod(list(filter(lambda item: item is not None, sk._ranks)))
+                    # learn the children and connect it to the current node. 
+                    pass
+
+            last_layer=layer
+        layer = self._dimension_tree._level_items[0]
+        item = layer[0]
+        for chld in item.children:
+            item.real_children.append(chld.real_node)
+        node = ht.TuckerCore(
+            core = tensor,
+            dims = item.val.copy(),
+            idx = item._dimension_index.copy()
+        )
+        self.root = node
+        node._isexpanded = True
+        item.real_node = node
+        for chld in item.real_children:
+            node.children.append(chld)
+            chld.parent = node
+        for chld in item.children:
+            chld.real_parent = node
+        node.get_ranks()
         self._iscompressed=True
         return None
-    
+
     def reconstruct(self):
         # The strategy is to start from the last core and work the way up to the root.
         assert(self._iscompressed)
