@@ -237,6 +237,42 @@ class TestCase(unittest.TestCase):
         tens.reconstruct()
         self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
 
+    def test_leaf2root_root2leaf_compare_6d(self):
+
+        np.random.seed(seed)
+        tensor = create_nway_tensor(num_dim=6)
+
+        tens_ltr=ht.HTucker()
+        tens_ltr.initialize(tensor)
+        dim_tree = ht.createDimensionTree(tens_ltr.original_shape,2,1)
+        dim_tree.get_items_from_level()
+        tens_ltr.compress_leaf2root(tensor,dimension_tree=dim_tree)
+
+        tens_rtl = ht.HTucker()
+        tens_rtl.initialize(tensor)
+        tens_rtl.compress_root2leaf(tensor)
+        self.assertTrue(np.allclose(tens_ltr.compression_ratio,tens_rtl.compression_ratio))
+        2+2
+        tens_rtl.leaves=[
+            tens_rtl.leaves[2],
+            tens_rtl.leaves[3],
+            tens_rtl.leaves[0],
+            tens_rtl.leaves[4],
+            tens_rtl.leaves[5],
+            tens_rtl.leaves[1]
+        ]
+        for ltr,rtl in zip(tens_ltr.leaves,tens_rtl.leaves):
+            self.assertEqual(ltr.shape,rtl.shape)
+
+        tens_rtl.transfer_nodes=[
+            tens_rtl.transfer_nodes[1],
+            tens_rtl.transfer_nodes[0],
+            tens_rtl.transfer_nodes[3],
+            tens_rtl.transfer_nodes[2]
+        ]
+        for ltr,rtl in zip(tens_ltr.transfer_nodes,tens_rtl.transfer_nodes):
+            self.assertEqual(ltr.shape,rtl.shape)
+
     def test_leaf2root_reconstruct_7d(self):
         np.random.seed(seed)
         # tensor = create_nway_tensor(num_dim=7)
