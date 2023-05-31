@@ -382,6 +382,11 @@ class Tree:
             nodes2expand.extend(node.children)
             self._level_items[node._level].append(node)
 
+    def toList(self):
+        # Returns a list from the tree
+        return None
+
+
 #     return None
 
         
