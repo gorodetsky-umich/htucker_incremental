@@ -5,15 +5,21 @@ import numpy as np
 import htucker as ht
 
 from math import ceil
+from warnings import warn
 
 
 __all__ = [
     "HTucker",
+    "TuckerCore",
+    "TuckerLeaf",
     "hosvd",
     "truncated_svd",
     "create_permutations",
     "split_dimensions",
-    "mode_n_unfolding"
+    "mode_n_unfolding",
+    "createDimensionTree",
+    "Tree",
+    "Node"
 ]
 
 
