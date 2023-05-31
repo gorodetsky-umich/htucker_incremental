@@ -16,6 +16,13 @@ __all__ = [
     "mode_n_unfolding"
 ]
 
+
+class NotFoundError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
   
 class TuckerCore:
     # Object for tucker cores. Planning to use it to create the recursive graph structure
