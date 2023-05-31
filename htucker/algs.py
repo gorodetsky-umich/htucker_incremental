@@ -261,7 +261,7 @@ class HTucker:
             new_shape=[]
             # burada ilk pass hangi dimensionun hangi dimensionla birlesecegini anlamak icin var
             for item in layer:
-                print(item._isleaf,item._ranks,item.val,item._dimension_index)
+                # print(item._isleaf,item._ranks,item.val,item._dimension_index)
                 if item._isleaf:
                     new_shape.append(item.val[0])
                 else:
@@ -629,7 +629,7 @@ def createDimensionTree(inp, numSplits, minSplitSize):
         raise TypeError(f"Type: {type(inp)} is unsupported!!")
     dimensionTree = Tree()
     dimensionTree.insertNode(dims.tolist())
-    print(np.array(dimensionTree.root.val))
+    # print(np.array(dimensionTree.root.val))
     dimensionTree.root._dimension_index = [idx for idx,_ in enumerate(dimensionTree.root.val)]
     nodes2expand = []
     nodes2expand.append(dimensionTree.root.val.copy())
@@ -642,14 +642,14 @@ def createDimensionTree(inp, numSplits, minSplitSize):
         if (not node._propagated) and (len(node.val) > minSplitSize + 1):
             # for split in [data[x:x+10] for x in xrange(0, len(data), 10)]:
             for dims,indices in zip(dim_split,idx_split): # place zip here
-                print(dims)
+                # print(dims)
                 # tree.insertNode(split,node.val)
                 # leaves.append(split)
                 dimensionTree.insertNode(dims.tolist(), node.val,dim_index=indices.tolist())
                 nodes2expand.append(dims.tolist())
         elif (not node._propagated) and (len(node.val) > minSplitSize):
             # i.e. the node is a leaf
-            print(node.val)
+            # print(node.val)
             for dims,indices in zip(dim_split,idx_split): # place zip here
                 dimensionTree.insertNode(dims.tolist(), node.val, dim_index=indices.tolist())
     dimensionTree.get_max_depth()
