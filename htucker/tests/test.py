@@ -56,6 +56,8 @@ class TestCase(unittest.TestCase):
                 ]
                 
         )
+        self.tensor6d=create_nway_tensor(num_dim=6)
+        self.tensor7d=create_nway_tensor(num_dim=7)
         
     @unittest.skip("add_edge")
     def test_add_edge(self):
