@@ -128,16 +128,60 @@ class TestCase(unittest.TestCase):
         self.assertEqual(tens.leaves[3].core.shape[1], tens.transfer_nodes[1].core.shape[1])
 
         # Check if the leaves are same for 4d case
-        self.assertTrue(np.allclose((leaf1-tens.leaves[0].core), np.zeros_like(leaf1)))
-        self.assertTrue(np.allclose((leaf2-tens.leaves[1].core), np.zeros_like(leaf2)))
-        self.assertTrue(np.allclose((leaf3-tens.leaves[2].core), np.zeros_like(leaf3)))
-        self.assertTrue(np.allclose((leaf4-tens.leaves[3].core), np.zeros_like(leaf4)))
+        # The exception handling is to cover singular vectors with flipped signs
+        flippedSignLeft = False
+        flippedSignRight = False
+        flip1, flip2, flip3, flip4 = False, False, False, False
+        try:
+            self.assertTrue(np.allclose((leaf1-tens.leaves[0].core), np.zeros_like(leaf1)))
+        except AssertionError:
+            print("Flipped sign at leaf 1")
+            self.assertTrue(np.allclose(leaf1-tens.leaves[0].core@(leaf1.T@tens.leaves[0].core),np.zeros_like(leaf1)))
+            flippedSignLeft = True
+            flip1 = True
+        try:
+            self.assertTrue(np.allclose((leaf2-tens.leaves[1].core), np.zeros_like(leaf2)))
+        except AssertionError:
+            print("Flipped sign at leaf 2")
+            self.assertTrue(np.allclose(leaf2-tens.leaves[1].core@(leaf2.T@tens.leaves[1].core),np.zeros_like(leaf2)))
+            flippedSignLeft = True
+            flip2 = True
+        try:
+            self.assertTrue(np.allclose((leaf3-tens.leaves[2].core), np.zeros_like(leaf3)))
+        except AssertionError:
+            print("Flipped sign at leaf 3")
+            self.assertTrue(np.allclose(leaf3-tens.leaves[2].core@(leaf3.T@tens.leaves[2].core),np.zeros_like(leaf3)))
+            flippedSignRight = True
+            flip3 = True
+        try:
+            self.assertTrue(np.allclose((leaf4-tens.leaves[3].core), np.zeros_like(leaf4)))
+        except AssertionError:
+            print("Flipped sign at leaf 4")
+            self.assertTrue(np.allclose(leaf4-tens.leaves[3].core@(leaf4.T@tens.leaves[3].core),np.zeros_like(leaf4)))
+            flippedSignRight = True
+            flip4 = True
 
         # Check if the transfer cores are same for 4d case
         # Note that we need to swap axes for the hardcoded version since we always
         # keep the tucker rank at the last index
-        self.assertTrue(np.allclose((nodel-tens.transfer_nodes[0].core), np.zeros_like(nodel)))
-        self.assertTrue(np.allclose((noder.transpose(1,2,0)-tens.transfer_nodes[1].core), np.zeros_like(noder.transpose(1,2,0))))
+
+        # Note that if there's a sign flip detected in the previous block, we adjust the transfer nodes accordingly.
+        if not flippedSignLeft:
+            self.assertTrue(np.allclose((nodel-tens.transfer_nodes[0].core), np.zeros_like(nodel)))
+        else:
+            if flip1:
+                nodel = np.einsum('ijk,il->ljk',nodel,(leaf1.T@tens.leaves[0].core))
+            if flip2:
+                nodel = np.einsum('ijk,jl->ilk',nodel,(leaf2.T@tens.leaves[1].core))
+            self.assertTrue(np.allclose((nodel-tens.transfer_nodes[0].core), np.zeros_like(nodel)))
+        if not flippedSignRight:
+            self.assertTrue(np.allclose((noder.transpose(1,2,0)-tens.transfer_nodes[1].core), np.zeros_like(noder.transpose(1,2,0))))
+        else:
+            if flip3:
+                noder = np.einsum('ijk,jl->ilk',noder,(leaf3.T@tens.leaves[2].core))
+            if flip4:
+                noder = np.einsum('ijk,kl->ijl',noder,(leaf4.T@tens.leaves[3].core))
+            self.assertTrue(np.allclose((noder.transpose(1,2,0)-tens.transfer_nodes[1].core), np.zeros_like(noder.transpose(1,2,0))))
 
         # self.assertEqual(leaf3.shape[1], noder.shape[1])
         # self.assertEqual(leaf4.shape[1], noder.shape[2])        
