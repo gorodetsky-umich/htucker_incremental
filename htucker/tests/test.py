@@ -112,7 +112,8 @@ class TestCase(unittest.TestCase):
     def test_htucker_4d(self):
         tens=ht.HTucker()
         (leaf1, leaf2, leaf3, leaf4, nodel, noder, top) = tens.compress_sanity_check(self.tensor)
-        tens.compress(self.tensor)
+        tens.initialize(self.tensor)
+        tens.compress_root2leaf(self.tensor)
 
         self.assertEqual(self.size[0], tens.leaves[0].core.shape[0])
         self.assertEqual(self.size[1], tens.leaves[1].core.shape[0])
@@ -207,7 +208,8 @@ class TestCase(unittest.TestCase):
     
     def test_reconstruct_4d(self):
         tens=ht.HTucker()
-        tens.compress(self.tensor)
+        tens.initialize(self.tensor)
+        tens.compress_root2leaf(self.tensor)
         tens.reconstruct()
         np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor))
 
