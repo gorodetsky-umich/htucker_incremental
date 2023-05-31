@@ -114,6 +114,9 @@ class TuckerLeaf:
         self.dims=dims
         self.leaf_idx=idx
         if matrix is not None: self.rank=matrix.shape[1]
+    @property
+    def shape(self):
+        return self.core.shape
         
 class HTucker:
 
