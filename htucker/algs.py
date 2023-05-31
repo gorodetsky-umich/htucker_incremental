@@ -387,6 +387,43 @@ class Tree:
         return None
 
 
+def createDimensionTree(inp, numSplits, minSplitSize):
+    if type(inp) is np.ndarray:
+        dims = np.array(inp.shape)
+    elif type(inp) is tuple or list:
+        dims = np.array(inp)  # NOQA
+    else:
+        raise TypeError(f"Type: {type(inp)} is unsupported!!")
+    dimensionTree = Tree()
+    dimensionTree.insertNode(dims.tolist())
+    print(np.array(dimensionTree.root.val))
+    dimensionTree.root._dimension_index = [idx for idx,_ in enumerate(dimensionTree.root.val)]
+    nodes2expand = []
+    nodes2expand.append(dimensionTree.root.val.copy())
+    while nodes2expand:
+        # print(leaves)
+        node2expand = nodes2expand.pop(0)
+        node = dimensionTree.findNode(dimensionTree.root, node2expand)
+        dim_split=np.array_split(np.array(node.val), numSplits)
+        idx_split=np.array_split(np.array(node._dimension_index), numSplits)
+        if (not node._propagated) and (len(node.val) > minSplitSize + 1):
+            # for split in [data[x:x+10] for x in xrange(0, len(data), 10)]:
+            for dims,indices in zip(dim_split,idx_split): # place zip here
+                print(dims)
+                # tree.insertNode(split,node.val)
+                # leaves.append(split)
+                dimensionTree.insertNode(dims.tolist(), node.val,dim_index=indices.tolist())
+                nodes2expand.append(dims.tolist())
+        elif (not node._propagated) and (len(node.val) > minSplitSize):
+            # i.e. the node is a leaf
+            print(node.val)
+            for dims,indices in zip(dim_split,idx_split): # place zip here
+                dimensionTree.insertNode(dims.tolist(), node.val, dim_index=indices.tolist())
+    dimensionTree.get_max_depth()
+    dimensionTree._nodeCount = dimensionTree._size-dimensionTree._leafCount-1 #last -1 is to subtract root node
+    return dimensionTree
+
+
 #     return None
 
         
