@@ -280,6 +280,15 @@ def mode_n_unfolding(tensor,mode):
     tensor=tensor.transpose(dims)
     return tensor.reshape(tensor.shape[0],-1,order='F')
 
+def mode_n_product(tensor:np.ndarray, matrix:np.ndarray, modes:list or tuple):
+    dims=[idx for idx in range(len(tensor.shape)+len(matrix.shape)-2)]
+    tensor_ax, matrix_ax = modes
+    dims.pop(tensor_ax)
+    dims.append(tensor_ax)
+    tensor=np.tensordot(tensor,matrix,axes=modes)
+    tensor=tensor.transpose(np.argsort(dims).tolist())
+    return tensor
+
 # def matrixTensorProduct(matrix,tensor,axes):
     
 #     ax1,ax2=axes
