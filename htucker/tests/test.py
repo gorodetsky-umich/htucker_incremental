@@ -211,6 +211,40 @@ class TestCase(unittest.TestCase):
         tens.initialize(self.tensor)
         tens.compress_root2leaf(self.tensor)
         tens.reconstruct()
+    def test_leaf2root_reconstruct_4d(self):
+        np.random.seed(seed)
+        tens=ht.HTucker()
+        tens.initialize(self.tensor)
+        dim_tree = ht.createDimensionTree(tens.original_shape,2,1)
+        dim_tree.get_items_from_level()
+        tens.compress_leaf2root(self.tensor,dimension_tree=dim_tree)
+        tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-self.tensor),np.zeros_like(self.tensor)))
+    
+    def test_leaf2root_reconstruct_7d(self):
+        np.random.seed(seed)
+        # tensor = create_nway_tensor(num_dim=7)
+        tensor = self.tensor7d
+        tens=ht.HTucker()
+        tens.initialize(tensor)
+        dim_tree = ht.createDimensionTree(tens.original_shape,2,1)
+        dim_tree.get_items_from_level()
+        tens.compress_leaf2root(tensor,dimension_tree=dim_tree)
+        tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
+
+    def test_leaf2root_reconstruct_6d(self):
+        np.random.seed(seed)
+        # tensor = create_nway_tensor(num_dim=6)
+        tensor = self.tensor6d
+        tens=ht.HTucker()
+        tens.initialize(tensor)
+        dim_tree = ht.createDimensionTree(tens.original_shape,2,1)
+        dim_tree.get_items_from_level()
+        tens.compress_leaf2root(tensor,dimension_tree=dim_tree)
+        tens.reconstruct()
+        self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
+
 def create_nway_tensor(num_dim=None, dims=None):
     # Creates a random n-dimensional tensor
     if num_dim is None:
