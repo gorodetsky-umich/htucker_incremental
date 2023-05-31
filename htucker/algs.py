@@ -310,6 +310,19 @@ class Node:
     def __str__(self) -> str:
         return self.children
     
+    def adjust_ranks(self):
+        if self.parent is None:
+            #This is the root node
+            if len(self._ranks)<len(self.children):
+                diff =len(self.children)-len(self._ranks)
+                self._ranks += [None]*diff
+        else:
+            # This is any node (incl. leaves)
+            if len(self._ranks)<len(self.children)+1:
+                diff =len(self.children)-len(self._ranks)+1
+                self._ranks += [None]*diff
+
+
 class Tree:
     def __init__(self) -> None:
         self.root = None
