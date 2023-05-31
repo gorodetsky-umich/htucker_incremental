@@ -136,7 +136,7 @@ class HTucker:
         self._iscompressed = False
 
         
-    def compress(self, tensor, isroot=False):
+    def compress_root2leaf(self, tensor=None, isroot=False): # isroot flag is subject to remove
         # TODO: Replace initial SVD with HOSVD -> Done, Requires testing
         # TODO: Create a structure for the HT -> 
         # TODO: Make compress() function general for n-dimensional tensors -> Done, need to check imbalanced trees (n=5)
@@ -148,6 +148,8 @@ class HTucker:
         #this if check looks unnecessary
         if self.root is None: isroot=True
 
+        if tensor is None:
+            raise NotFoundError("No tensor is given. Please check if you provided correct input(s)")
         
         dims=list(tensor.shape)
 
@@ -161,7 +163,7 @@ class HTucker:
         # Reshape initial tensor into a matrix for the first splt
         tensor=tensor.reshape(np.prod(left),np.prod(right), order='F')
         
-        self.root.core, self.root.left.core, self.root.right.core = hosvd(tensor)
+        self.root.core, [self.root.left.core, self.root.right.core] = hosvd(tensor)
         # The reshapings below might be unnecessary, will look into those
         # self.root.left.core = self.root.left.core.reshape(left+[-1],order='F')
         # self.root.right.core = self.root.right.core.reshape(right+[-1],order='F')
@@ -199,10 +201,16 @@ class HTucker:
                 self.nodes2Expand.append(node.left)
 
             if len(right)==1:
-                node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=left, idx=_leaf_counter)
+                node.right=TuckerLeaf(matrix=lsv2,parent=node, dims=right, idx=_leaf_counter)
                 self.leaves[_leaf_counter]=node.right
                 _leaf_counter+=1
             else:
+                node.right=TuckerCore(core=lsv2, parent=node, dims=right)
+                self.nodes2Expand.append(node.right)
+        
+        self._iscompressed=True
+        return None
+    
     def compress_leaf2root(self,tensor=None,dimension_tree=None):
         assert(self._iscompressed is False)
         if tensor is None:
