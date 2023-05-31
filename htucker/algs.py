@@ -359,6 +359,18 @@ class Tree:
             self._leaves.append(newNode)
             self._leafCount+=1
 
+    def get_max_depth(self):
+        self._depth = 0
+        for leaf in self._leaves:
+            depth=0
+            node = leaf
+            while node.parent is not None:
+                depth += 1
+                node = node.parent
+            if depth > self._depth:
+                self._depth = depth
+        return None
+                
 #     return None
 
         
