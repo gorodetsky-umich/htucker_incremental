@@ -128,16 +128,19 @@ class HTucker:
 
     # harded for 4d first
     def __init__(self):
-        self._leaf_count=4
-        self.leaves = [None]*self._leaf_count
-        self.transfer_nodes = [None]*(self._leaf_count-2)
+        # This function is there to just create some of the necessary variables
+        self._leaf_count = None
+        self.leaves = None
+        self.transfer_nodes = None
         self.root = None
-        self.nodes2Expand=[]
+        # self.nodes2Expand=[]
         self._iscompressed=False
+        self._dimension_tree = None 
 
-    def initialize(self,tensor):
+    def initialize(self,tensor,dimension_tree=None):
         self.original_shape = list(tensor.shape)
         self._leaf_count=len(self.original_shape)
+        self._dimension_tree = dimension_tree
         self.leaves = [None]*self._leaf_count
         self.transfer_nodes = [None]*(self._leaf_count-2) #Root node not included here
         self.root = None
