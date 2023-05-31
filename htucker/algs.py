@@ -303,6 +303,15 @@ class Tree:
         self._leaves = []
         self._level_items = None 
 
+    def findNode(self, node, key):
+        if (node is None) or (node.val == key):
+            return node
+        for child in node.children:
+            return_node = self.findNode(child, key)
+            if return_node:
+                return return_node
+        return None
+
 #     return None
 
         
