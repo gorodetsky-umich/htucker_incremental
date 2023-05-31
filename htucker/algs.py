@@ -218,7 +218,7 @@ def hosvd(tensor):
 
     if ndims == 2:
         [u, s, v] = truncated_svd(tensor, truncation_tolerance=1e-8, full_matrices=False)
-        return np.diag(s), u, v.T
+        return np.diag(s), [u, v.T]
 
     permutations=create_permutations(ndims)
 
