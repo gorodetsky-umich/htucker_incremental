@@ -315,6 +315,16 @@ class Tree:
     def isEmpty(self):
         return self._size == 0
 
+    def initializeTree(self, vals):
+        # Initalizes the tree
+        if self.root is None:
+            if type(vals) is list:
+                self.root = vals
+            else:
+                raise TypeError(f"Type: {type(vals)} is not known!")
+        else:
+            warn("Root node already implemented! Doing nothing.")
+
 #     return None
 
         
