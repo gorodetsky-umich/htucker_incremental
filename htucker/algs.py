@@ -1,6 +1,5 @@
 """Hierarchical Tucker."""
 
-
 import numpy as np
 import htucker as ht
 
@@ -54,6 +53,7 @@ class TuckerCore:
             self.ranks=list(self.core.shape)
     
     def contract_children(self):
+        # Need to write another contraction code for n-ary splits
         _ldims=len(self.left.dims)+1
         _rdims=len(self.right.dims)+1
         
@@ -113,6 +113,7 @@ class TuckerCore:
     @property
     def shape(self):
         return self.core.shape
+
 class TuckerLeaf:
     def __init__(self, matrix=None, parent=None, dims=None, idx=None) -> None:
         self.parent=parent
@@ -128,6 +129,7 @@ class HTucker:
 
     # harded for 4d first
     def __init__(self):
+        # TODO: Move initialization to initialize function entirely. 
         # This function is there to just create some of the necessary variables
         self._leaf_count = None
         self.leaves = None
@@ -135,7 +137,9 @@ class HTucker:
         self.root = None
         # self.nodes2Expand=[]
         self._iscompressed=False
-        self._dimension_tree = None 
+        self._dimension_tree = None
+        self.rtol = None 
+
 
     def initialize(self,tensor,dimension_tree=None):
         self.original_shape = list(tensor.shape)
@@ -146,19 +150,22 @@ class HTucker:
         self.root = None
         self.nodes2Expand = []
         self._iscompressed = False
+        self.allowed_error=0
 
         
     def compress_root2leaf(self, tensor=None, isroot=False): # isroot flag is subject to remove
-        # TODO: Replace initial SVD with HOSVD -> Done, Requires testing
+        # TODO: Replace initial SVD with HOSVD -> Done, Requires testing -> Testing done
         # TODO: Create a structure for the HT -> 
-        # TODO: Make compress() function general for n-dimensional tensors -> Done, need to check imbalanced trees (n=5)
-        # TODO: Write a reconstruct() function.
+        # TODO: Make compress() function general for n-dimensional tensors -> Done, need to check imbalanced trees (n=5) -> Testing done
+        # TODO: Write a reconstruct() function. -> Done including testing.
+        # TODO: Implement error truncated compression
         assert(self._iscompressed is False)
         _leaf_counter=0
         _node_counter=0
 
         #this if check looks unnecessary
         if self.root is None: isroot=True
+        # This looks unnecessary
 
         if tensor is None:
             raise NotFoundError("No tensor is given. Please check if you provided correct input(s)")
@@ -232,13 +239,33 @@ class HTucker:
             self._dimension_tree = createDimensionTree(tensor,2,1)
         else:
             self._dimension_tree = dimension_tree
+
+        if self.rtol is not None:
+            _num_total_svds=sum([len(items) for items in self._dimension_tree._level_items[1:]])-1
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/_num_total_svds # allowed error per svd step
+            print(np.sqrt(2*len(tensor.shape)-3),len(tensor.shape),_num_total_svds)
+            print(np.linalg.norm(tensor),self.rtol,np.sqrt(2*len(tensor.shape)-3))
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol*np.sqrt(2*len(tensor.shape)-3)#/_num_total_svds # allowed error per svd step
+
+            self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) *(_num_total_svds/len(tensor.shape))# allowed error per svd
+            
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(_num_total_svds)#/_num_total_svds # allowed error per svd step
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol*(2+np.sqrt(2))*(np.sqrt(len(tensor.shape)))/_num_total_svds # allowed error per svd step
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/((2+np.sqrt(2))*(np.sqrt(len(tensor.shape))))*np.sqrt(_num_total_svds) # allowed error per svd step
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/(self._dimension_tree._depth) # allowed error per svd step
         
         ## Start with initial HOSVD to get the initial set of leaves
         existing_leaves=[]
         existing_nodes=[]
         node_idx = self._dimension_tree._nodeCount-1
-
-        _ , leafs = hosvd(tensor)
+        print(self.allowed_error)
+        print(len(self._dimension_tree._level_items[-1]))
+        # _ , leafs = hosvd(tensor,tol=self.allowed_error*len(self._dimension_tree._level_items[-1]))
+        _ , leafs = hosvd(tensor,tol=self.allowed_error)
+        # _ , leafs = hosvd(tensor,tol=self.allowed_error,dimensions=len(self._dimension_tree._level_items[-1]))
+        # _ , leafs = hosvd(tensor,tol=self.allowed_error*len(self._dimension_tree._level_items[-1]),dimensions=len(self._dimension_tree._level_items[-1]))
+        # _ , leafs = hosvd(tensor,tol=self.allowed_error)
         for li in self._dimension_tree._level_items[-1]:
             if li._isleaf:
                 leaf_idx=li._dimension_index[0]
@@ -260,8 +287,10 @@ class HTucker:
         for layer in self._dimension_tree._level_items[1:-1][::-1]:
             new_shape=[]
             # burada ilk pass hangi dimensionun hangi dimensionla birlesecegini anlamak icin var
+            deneme=[]
             for item in layer:
                 # print(item._isleaf,item._ranks,item.val,item._dimension_index)
+                deneme.extend(item._dimension_index)
                 if item._isleaf:
                     new_shape.append(item.val[0])
                 else:
@@ -271,7 +300,16 @@ class HTucker:
             # dimension contractionun nasil olacagini planladiktan sonra reshape et ve HOSVD hesapla
             # if len(new_shape)>1:
             tensor=tensor.reshape(new_shape,order="F")
-            _ , leafs = hosvd(tensor)
+            print(len(new_shape),new_shape)
+            # print(len(layer),tensor.shape, deneme, len(deneme),new_shape,len(new_shape),item._dimension_index)
+            # if len(new_shape)==2:
+            #     _ , leafs = hosvd(tensor,tol=self.allowed_error)
+            #     print(leafs[0].shape,leafs[1].shape)
+            # else:
+            #     # _ , leafs = hosvd(tensor,tol=self.allowed_error*len(new_shape))
+            #     _ , leafs = hosvd(tensor,tol=self.allowed_error)
+            _ , leafs = hosvd(tensor,tol=self.allowed_error)
+            # _ , leafs = hosvd(tensor,tol=self.allowed_error*len(deneme))
             # else:
                 # We are at the first level 
                 # leafs = [tensor]
@@ -362,12 +400,16 @@ class HTucker:
 
     def compress_sanity_check(self,tensor):
         # Commenting out below for now, might be needed later for checking
+        # print("\n",tensor)
+        # print("\n",tensor.shape)
 
         mat_tensor = np.reshape(tensor, (tensor.shape[0]*tensor.shape[1],
                                          tensor.shape[2]*tensor.shape[3]), order='F')
 
         [u, s, v] = truncated_svd(mat_tensor, 1e-8, full_matrices=False)
+        # print("\n U")
         [core_l, lsv_l] = hosvd(u.reshape(tensor.shape[0],tensor.shape[1],-1, order='F'))
+        # print("\n V")
         [core_r, lsv_r] = hosvd(v.reshape(-1, tensor.shape[2],tensor.shape[3], order='F'))
 
         # need an HOSVD tucker of u (and v) this (look at kolda paper)
@@ -391,56 +433,109 @@ class HTucker:
 
         
         
-def truncated_svd(a, truncation_tolerance=None, full_matrices=True, compute_uv=True, hermitian=False):
-
+def truncated_svd(a, truncation_threshold=None, full_matrices=True, compute_uv=True, hermitian=False):
+    # print(a.shape)
     [u, s, v] = np.linalg.svd(a,
                               full_matrices=full_matrices,
                               compute_uv=compute_uv,
                               hermitian=False)
-    if truncation_tolerance == None:
+    if truncation_threshold == None:
         return [u, s, v]
 
-    trunc = sum(s>=truncation_tolerance)
+    trunc = sum(s>=truncation_threshold)
+    # print(truncation_threshold,s,trunc)
     u=u[:,:trunc]
     s=s[:trunc]
     v=v[:trunc,:]
 
     return [u, s, v]
         
-def hosvd(tensor):
-    ndims=len(tensor.shape)
+def hosvd(tensor,rtol=None,tol=None,threshold=1e-8,norm=None,dimensions=None):
+    
+    # TODO: Arrange 
 
-    if ndims == 2:
-        [u, s, v] = truncated_svd(tensor, truncation_tolerance=1e-8, full_matrices=False)
+    # if norm is None:
+
+    if tol is not None:
+        tolerance = tol
+    else:
+        tolerance = 1e-8
+
+    if (tol is None) and (rtol is not None):
+        tensor_norm=np.linalg.norm(tensor)
+        tolerance = tensor_norm*rtol
+    if dimensions is None:
+        ndims=len(tensor.shape)
+    else:
+        ndims=dimensions
+        # tolerance=tolerance/np.sqrt(len(tensor.shape)/ndims)
+    # print(ndims,len(tensor.shape))
+    # print(tolerance)
+    # tolerance=tolerance*1.7
+
+    if len(tensor.shape) == 2:
+        [u, s, v] = truncated_svd(tensor, truncation_threshold=threshold, full_matrices=False)
+
+        # u = u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance/np.sqrt(ndims))**2]
+        # v = v[np.cumsum((s**2)[::-1])[::-1]>(tolerance/np.sqrt(ndims))**2,:]
+        # s = s[np.cumsum((s**2)[::-1])[::-1]>(tolerance/np.sqrt(ndims))**2]
+
+        # u = u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2]
+        # v = v[np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2,:]
+        # s = s[np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2]
+
+        u = u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2]
+        v = v[np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2,:]
+        s = s[np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2]
         return np.diag(s), [u, v.T]
 
-    permutations=create_permutations(ndims)
+    # permutations=create_permutations(ndims)
+    permutations=create_permutations(len(tensor.shape))
 
     leftSingularVectors=[]
     singularValues=[]
+    # print("\n",tensor.shape)
+    # print(permutations)
 
     # May replace this with a combination of mode-n unfolding and truncated svd
     for dim , perm in enumerate(permutations):
         # print(dim,perm)
-        tempTensor=tensor.transpose(perm).reshape(tensor.shape[dim],-1)
+
+        # Swap next two lines if something breaks down
+        # tempTensor=tensor.transpose(perm).reshape(tensor.shape[dim],-1)
+        tempTensor = mode_n_unfolding(tensor,dim)
 
         # [u, s, v] = np.linalg.svd(tempTensor,full_matrices=False)
-        [u, s, v] = truncated_svd(tempTensor,truncation_tolerance=1e-8,full_matrices=False)
-
+        [u, s, v] = truncated_svd(tempTensor,truncation_threshold=threshold,full_matrices=False)
+        # np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2
+        # print(u.shape)
         # Automatic rank truncation, can later be replaced with the deltaSVD function
-        leftSingularVectors.append(u)
-        # singularValues.append(s)
+        
+        # leftSingularVectors.append(u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2])
+        # singularValues.append(s[np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2])
+        
+        # leftSingularVectors.append(u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance/np.sqrt(ndims))**2])
+        # singularValues.append(s[np.cumsum((s**2)[::-1])[::-1]>(tolerance/np.sqrt(ndims))**2])
+
+        # leftSingularVectors.append(u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2])
+        # singularValues.append(s[np.cumsum((s**2)[::-1])[::-1]>(tolerance/ndims)**2])
+
+        # print(np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2)
+        leftSingularVectors.append(u[:,np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2])
+        singularValues.append(s[np.cumsum((s**2)[::-1])[::-1]>(tolerance)**2])
 
     
     for dim , u in enumerate(leftSingularVectors):
-        # print(dim,u.shape,tensor.shape)
+        # print(dim,u.shape)#,tensor.shape)
         tensorShape=list(tensor.shape)
         currentIndices=list(range(1,len(tensorShape)))
         currentIndices=currentIndices[:dim]+[0]+currentIndices[dim:]
         tensor=np.tensordot(u.T, tensor, axes=(1, dim)).transpose(currentIndices)
     # tensor = np.einsum('ij,kl,mn,op,ikmo->jlnp',leftSingularVectors[0],leftSingularVectors[1],leftSingularVectors[2],leftSingularVectors[3],tensor)
-
+    # print(tensor.shape)
+    # print()
     return tensor , leftSingularVectors
+    # return tensor , singularValues, leftSingularVectors
 
 def create_permutations(nDims):
     # Creates permutations to compute the matricizations
@@ -536,13 +631,18 @@ class Tree:
         self._leaves = []
         self._level_items = None 
 
-    def findNode(self, node, key):
+    def findNode(self, node, key, check_propagation=False):
         if (node is None) or (node.val == key):
             return node
         for child in node.children:
-            return_node = self.findNode(child, key)
+            return_node = self.findNode(child, key,check_propagation=check_propagation)
             if return_node:
-                return return_node
+                if check_propagation and (not return_node._propagated):
+                    return return_node
+                elif check_propagation and return_node._propagated:
+                    pass
+                else:
+                    return return_node
         return None
 
     def isEmpty(self):
@@ -576,7 +676,7 @@ class Tree:
             newNode._level = parent._level+1
             parent.adjust_ranks()
         else: # Key/dimensions of the parent is given as input
-            parentNode = self.findNode(self.root, parent)
+            parentNode = self.findNode(self.root, parent,check_propagation=True)
             if not (parentNode):
                 raise NotFoundError(f"No parent was found for parent name: {parent}")
             parentNode.children.append(newNode)
@@ -621,6 +721,7 @@ class Tree:
 
 
 def createDimensionTree(inp, numSplits, minSplitSize):
+    ## FIXME: Dimension tree returns wrong case where dimension order repeats itself.
     if type(inp) is np.ndarray:
         dims = np.array(inp.shape)
     elif type(inp) is tuple or list:
@@ -634,9 +735,13 @@ def createDimensionTree(inp, numSplits, minSplitSize):
     nodes2expand = []
     nodes2expand.append(dimensionTree.root.val.copy())
     while nodes2expand:
+        # BUG: searching just with node values return wrong results
+        # FIXME: change dimensions in nodes2expand to a tuple of (dimensions,parent node) 
+        #        to avoid confusion while searching in the dimension tree.
+        #        Or maybe come up with a new createDimensionTree that suits n-ary splits better.
         # print(leaves)
         node2expand = nodes2expand.pop(0)
-        node = dimensionTree.findNode(dimensionTree.root, node2expand)
+        node = dimensionTree.findNode(dimensionTree.root, node2expand, check_propagation=True)
         dim_split=np.array_split(np.array(node.val), numSplits)
         idx_split=np.array_split(np.array(node._dimension_index), numSplits)
         if (not node._propagated) and (len(node.val) > minSplitSize + 1):
@@ -645,13 +750,15 @@ def createDimensionTree(inp, numSplits, minSplitSize):
                 # print(dims)
                 # tree.insertNode(split,node.val)
                 # leaves.append(split)
-                dimensionTree.insertNode(dims.tolist(), node.val,dim_index=indices.tolist())
+                # dimensionTree.insertNode(dims.tolist(), node.val,dim_index=indices.tolist())
+                dimensionTree.insertNode(dims.tolist(), node,dim_index=indices.tolist())
                 nodes2expand.append(dims.tolist())
         elif (not node._propagated) and (len(node.val) > minSplitSize):
             # i.e. the node is a leaf
             # print(node.val)
             for dims,indices in zip(dim_split,idx_split): # place zip here
-                dimensionTree.insertNode(dims.tolist(), node.val, dim_index=indices.tolist())
+                # dimensionTree.insertNode(dims.tolist(), node.val, dim_index=indices.tolist())
+                dimensionTree.insertNode(dims.tolist(), node, dim_index=indices.tolist())
     dimensionTree.get_max_depth()
     dimensionTree._nodeCount = dimensionTree._size-dimensionTree._leafCount-1 #last -1 is to subtract root node
     return dimensionTree

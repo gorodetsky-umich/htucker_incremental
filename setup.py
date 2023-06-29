@@ -14,6 +14,7 @@ if sys.version_info[:2] < (3, 8):
 name = "htucker"
 description = "Hierarchical Tucker"
 authors = {
+    "Aksoy": ("Doruk Aksoy", "doruk@umich.edu"),
     "Gorodetsky": ("Alex Gorodetsky", "goroda@umich.edu"),
 }
 

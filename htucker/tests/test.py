@@ -2,7 +2,6 @@ import unittest
 import random
 
 import numpy as np
-
 import htucker as ht
 
 seed =1905
@@ -14,7 +13,7 @@ class TestCase(unittest.TestCase):
     def setUp(self):
 
         num_dim = 4
-        self.size = [3, 4, 7, 5]
+        self.size = [11, 4, 7, 5]
 
         leaf_ranks = [3, 2, 5, 4]
         
@@ -59,7 +58,7 @@ class TestCase(unittest.TestCase):
         self.tensor6d=create_nway_tensor(num_dim=6)
         self.tensor7d=create_nway_tensor(num_dim=7)
         
-    @unittest.skip("add_edge")
+    # @unittest.skip("add_edge")
     def test_add_edge(self):
 
         # print("\n", self.tensor)
