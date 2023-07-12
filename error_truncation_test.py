@@ -12,9 +12,10 @@ np.random.seed(SEED)
 
 # random_tensor = np.random.randn(110,170,90)
 random_tensor = np.array(Image.open("31.png"))
-# random_tensor = random_tensor.reshape(14,15,16,10,3,order="F")
+random_tensor = random_tensor.reshape(14,15,16,10,3,order="F")
 # random_tensor = random_tensor.reshape(6,5,7,8,10,6,order="F")
-random_tensor = random_tensor.reshape(2,3,5,7,2,2,2,2,5,2,3,order="F")
+# random_tensor = random_tensor.reshape(2,3,5,7,2,2,2,2,5,2,3,order="F")
+random_tensor2 = np.array(Image.open("32.png")).reshape(random_tensor.shape,order="F")
 
 # random_tensor = np.load("/home/doruk/bayesianOED/catgelData/3rd/1/catgelData_31.npy")#.transpose(0,1,3,2,4)
 
