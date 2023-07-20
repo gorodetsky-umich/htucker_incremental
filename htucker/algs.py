@@ -105,7 +105,7 @@ class TuckerCore:
             ",".join([
                 ','.join(strings+[core_string])+'->'+result_string+"'",
                 ",".join([f"matrices[{idx}]" for idx in range(len(matrices))]),
-                'optimize=True']
+                'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
             )+
             ")"
         )
@@ -493,6 +493,72 @@ class HTucker:
                 ")"
             )
             
+        return core
+    
+    def incremental_update(self,new_tensor):
+        if list(new_tensor.shape)!=self.original_shape:
+            try:
+                new_tensor = new_tensor.reshape(self.original_shape,order="F")
+            except ValueError:
+                warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
+
+        core = self.project(new_tensor)
+        reconstruction = self.reconstruct(core)
+        tenNorm = np.linalg.norm(new_tensor)
+        if (np.linalg.norm(new_tensor-reconstruction)/tenNorm)<=self.rtol:
+            # Current tensor network is sufficient, no need to update the cores.
+            return core
+        
+        allowed_error=tenNorm*self.rtol/np.sqrt(2*len(new_tensor.shape)-3)
+
+        for layer in self._dimension_tree._level_items[::-1][:-1]:
+            for itemIdx, item in enumerate(layer):
+                2+2
+                idxCtr = 0
+                strings=[]
+                last_char=97
+                dims = len(new_tensor.shape)
+                coreString =[chr(idx) for idx in range(last_char,last_char+dims)]
+                strings.append(''.join(coreString))
+                last_char+=dims
+                
+                contractionDims = len(item.shape)-1
+
+                if type(item.real_node) is ht.TuckerLeaf:
+                    2+2
+
+                    strings.append(strings[0][idxCtr]+chr(last_char))
+                    strings.append(chr(last_char+contractionDims)+chr(last_char))
+                    coreString[idxCtr]=chr(last_char+contractionDims)
+
+                    tempTens= eval(
+                        "np.einsum("+
+                        "'"+
+                        ",".join([
+                            ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                            ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                            'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                        )+
+                        ")"
+                    )
+                
+                    tempTens = tempTens-new_tensor
+                    u,s,_ = np.linalg.svd(ht.mode_n_unfolding(tempTens,itemIdx),full_matrices=False)
+                                    
+
+                elif type(item.real_node) is ht.TuckerCore:
+                    2+2
+
+
+                else:
+                    ValueError(f"Unknown node type! {type(item)} is not known!")
+
+                u = u[:,np.cumsum((s**2)[::-1])[::-1]>(allowed_error)**2]
+                # s = s[np.cumsum((s**2)[::-1])[::-1]>(allowed_error)**2]
+                u_shape = list(item.shape)[:-1]+[-1]
+                item.real_node.core = np.concatenate(())
+
+
         return core
 
     def compress_sanity_check(self,tensor):
