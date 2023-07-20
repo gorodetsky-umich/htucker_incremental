@@ -124,6 +124,9 @@ class TuckerLeaf:
     @property
     def shape(self):
         return self.core.shape
+    def get_ranks(self):
+        if self.core is not None:
+            self.rank=self.core.shape[-1]
         
 class HTucker:
 
