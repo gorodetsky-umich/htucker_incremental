@@ -619,7 +619,13 @@ class Node:
             if len(self._ranks)<len(self.children)+1:
                 diff =len(self.children)-len(self._ranks)+1
                 self._ranks += [None]*diff
-
+    
+    @property
+    def shape(self):
+        if self.real_node:
+            return self.real_node.shape
+        else:
+            return warn("No real node is defined.")
 
 class Tree:
     def __init__(self) -> None:
