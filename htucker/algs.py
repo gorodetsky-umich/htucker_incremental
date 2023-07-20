@@ -446,6 +446,54 @@ class HTucker:
             )
         return new_tensor
         
+    
+    def reconstruct(self,core):
+        # if list(new_tensor.shape)!=self.original_shape:
+        #     try:
+        #         new_tensor = new_tensor.reshape(self.original_shape,order="F")
+        #     except ValueError:
+        #         warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
+        
+        for layer in self._dimension_tree._level_items[1:]:
+            # idxCtr = 0
+            strings=[]
+            last_char=97
+            dims = len(core.shape)
+            coreString =[chr(idx) for idx in range(last_char,last_char+dims)]
+            strings.append(''.join(coreString))
+            last_char+=dims
+            for itemIdx, item in enumerate(layer):
+                if type(item.real_node) is ht.TuckerLeaf:
+                    tempStr = chr(last_char)
+
+                    strings.append(tempStr+strings[0][itemIdx])
+                    coreString[itemIdx]=tempStr
+                    last_char+=1
+                    # idxCtr+=1
+                elif type(item.real_node) is ht.TuckerCore:
+                    contractionDims = len(item.shape)-1
+                    tempStr="".join([chr(last_char+stringIdx) for stringIdx in range(0,contractionDims)])#Sorun olursa 0i 1 yap
+                    strings.append(
+                        tempStr+strings[0][itemIdx]
+                        # strings[0][idxCtr:idxCtr+contractionDims]+chr(last_char)
+                        )
+                    coreString[itemIdx]=tempStr
+                    last_char += contractionDims
+                    # idxCtr += contractionDims
+                else:
+                    ValueError(f"Unknown node type! {type(item)} is not known!")
+            core = eval(
+                "np.einsum("+
+                "'"+
+                ",".join([
+                    ','.join(strings)+'->'+"".join(coreString)+"'",'core',
+                    ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                    'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                )+
+                ")"
+            )
+            
+        return core
 
     def compress_sanity_check(self,tensor):
         # Commenting out below for now, might be needed later for checking
