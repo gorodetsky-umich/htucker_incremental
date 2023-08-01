@@ -386,6 +386,156 @@ class HTucker:
         self._iscompressed=True
         return None
 
+    def compress_leaf2root_batch(self, tensor=None, dimension_tree=None, batch_dimension=None):
+        assert(self._iscompressed is False)
+        if tensor is None:
+            raise NotFoundError("No tensor is given. Please check if you provided correct input(s)")
+        if batch_dimension is None:
+            warn("No batch dimension is given, assuming last dimension as batch dimension!")
+            batch_dimension = len(tensor.shape)-1
+        batch_count = tensor.shape[batch_dimension]
+        if (self._dimension_tree is None) and (dimension_tree is None):
+            warn("No dimension tree is given, creating one with binary splitting now...")
+            tree_shape = list(tensor.shape)[:batch_dimension]+list(tensor.shape)[batch_dimension:]
+            self._dimension_tree = createDimensionTree(tree_shape,2,1)
+        else:
+            self._dimension_tree = dimension_tree
+
+        if self.rtol is not None:
+            # _num_total_svds=sum([len(items) for items in self._dimension_tree._level_items[1:]])-1
+            self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+        
+        node_idx = self._dimension_tree._nodeCount-1
+
+        hosvd_dimensions = [item._dimension_index[0] for item in self._dimension_tree._level_items[-1] if item._isleaf]
+        leafs = hosvd_only_for_dimensions(
+            tensor,
+            tol = self.allowed_error,
+            dims = hosvd_dimensions,
+            # batch_dimension = batch_dimension, 
+            contract = False,
+        )
+        for leaf_idx,li,leaf in zip(hosvd_dimensions,self._dimension_tree._level_items[-1],leafs):
+            if li._isleaf:
+                # leaf_idx=li._dimension_index[0]
+                self.leaves[leaf_idx]=ht.TuckerLeaf(matrix=leaf,dims=li.val[0],idx=leaf_idx)
+                li._ranks[0]=self.leaves[leaf_idx].shape[-1]
+                li.real_node = self.leaves[leaf_idx]
+                li.parent._ranks[li.parent._ranks.index(None)]=li.real_node.rank
+            tensor = mode_n_product(tensor=tensor, matrix=leaf, modes=[leaf_idx,0])
+        
+
+        for layer in self._dimension_tree._level_items[1:-1][::-1]:
+            hosvd_dimensions = [item._dimension_index[0] for item in layer if item._isleaf]
+            # _ , leafs = hosvd(tensor,tol=self.allowed_error)
+            if hosvd_dimensions:
+                # Compute missing leaves (if any)
+                leafs = hosvd_only_for_dimensions(
+                    tensor,
+                    tol = self.allowed_error,
+                    dims = hosvd_dimensions,
+                    # batch_dimension = batch_dimension, 
+                    contract = False,
+                )
+                leaf_ctr=0
+                for item_idxx,item in enumerate(layer):
+                    if item._isleaf:
+                        leaf_idx=item._dimension_index[0]
+                        self.leaves[leaf_idx]=ht.TuckerLeaf(matrix=leafs[leaf_ctr],dims=item.val[0],idx=leaf_idx)
+                        item._ranks[0]=self.leaves[leaf_idx].shape[-1]
+                        item.real_node = self.leaves[leaf_idx]
+                        item.parent._ranks[item.parent._ranks.index(None)]=item.real_node.rank
+                        leaf_ctr+=1
+            # hosvd_dimensions = [item._dimension_index[0] for item in layer if not item._isleaf]
+            
+            new_shape=[]
+            inter_shape=[]
+            dimension_shift=0
+            for item in layer:
+                child_list=[]
+                if item.children:
+                    if item._dimension_index[0]<batch_dimension:
+                        # print(len(item.children)-1)
+                        dimension_shift+=len(item.children)-1
+                    for chld in item.children:
+                        child_list.append(chld.shape[-1])
+                else:
+                    child_list.append(item.shape[0])
+                new_shape.append(np.prod(child_list))
+                # inter_shape.append(np.prod(child_list))
+            print(batch_dimension-dimension_shift)
+            
+            batch_dimension-=dimension_shift
+            new_shape.insert(batch_dimension,batch_count)
+            tensor=tensor.reshape(new_shape,order="F")
+            hosvd_dimensions = [item_idx for item_idx,item in enumerate(layer) if not item._isleaf]
+            nodes = hosvd_only_for_dimensions(
+                tensor,
+                tol = self.allowed_error,
+                dims = hosvd_dimensions,
+                contract = False
+            )
+            node_ctr=0
+            leaf_ctr=0
+            for item_idx, item in enumerate(layer):
+                if not item._isleaf:
+                    # The current item is a node
+                    item._ranks[item._ranks.index(None)]=nodes[node_ctr].shape[-1]
+                    item.parent._ranks[item.parent._ranks.index(None)]=nodes[node_ctr].shape[-1]
+                    node = ht.TuckerCore(
+                        core=nodes[node_ctr].reshape(item._ranks,order="F"),
+                        dims=item.val.copy(),
+                        idx=item._dimension_index.copy()
+                        )
+                    self.transfer_nodes[node_idx]=node
+
+                    tensor = mode_n_product(tensor,nodes[node_ctr],modes=[item_idx,0])
+                    node._isexpanded = True
+                    node_idx -=1
+                    if len(layer) !=1: node._isroot = False
+                    item.real_node = node
+                    for chld in item.real_children:
+                        node.children.append(chld)
+                        chld.parent = node
+                    for chld in item.children:
+                        chld.real_parent = node
+                    # self.transfer_nodes
+                    node.get_ranks()
+
+                    node_ctr += 1
+                else:
+                    # The current item is a leaf
+                    tensor = mode_n_product(tensor,leafs[leaf_ctr],modes=[item_idx,0])
+                    leaf_ctr += 1
+                    # leaf_idx = item._dimension_index[0]
+                    # self.leaves[leaf_idx] = ht.TuckerLeaf(matrix=leafs[leaf_idx],dims=item.val[0],idx=leaf_idx)
+                    # item.ranks[0] = self.leaves[leaf_idx].shape[-1]
+                    # item.real_node = self.leaves[leaf_idx]
+                    # item.parent_.ranks[item.parent_ranks.index(None)] = item.real.node.rank
+        layer = self._dimension_tree._level_items[0]
+        item = layer[0]
+        for chld in item.children:
+            item.real_children.append(chld.real_node)
+        node = ht.TuckerCore(
+            core = tensor,
+            dims = item.val.copy(),
+            idx = item._dimension_index.copy()
+        )
+        self.root = node
+        node._isexpanded = True
+        item.real_node = node
+        for chld in item.real_children:
+            node.children.append(chld)
+            chld.parent = node
+        for chld in item.children:
+            chld.real_parent = node
+        node.get_ranks()
+        self._iscompressed=True
+    
+        return None
+
+    
+
     def reconstruct(self):
         # The strategy is to start from the last core and work the way up to the root.
         assert(self._iscompressed)
