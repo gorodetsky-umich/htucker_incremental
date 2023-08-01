@@ -144,9 +144,12 @@ class HTucker:
         self.rtol = None 
 
 
-    def initialize(self,tensor,dimension_tree=None):
+    def initialize(self,tensor,dimension_tree=None, batch=False):
         self.original_shape = list(tensor.shape)
-        self._leaf_count=len(self.original_shape)
+        if batch: 
+            self._leaf_count = len(self.original_shape)-1
+        else:
+            self._leaf_count=len(self.original_shape)
         self._dimension_tree = dimension_tree
         self.leaves = [None]*self._leaf_count
         self.transfer_nodes = [None]*(self._leaf_count-2) #Root node not included here
