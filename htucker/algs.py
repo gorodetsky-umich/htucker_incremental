@@ -783,6 +783,49 @@ def hosvd(tensor,rtol=None,tol=None,threshold=1e-8,norm=None,dimensions=None):
     return tensor , leftSingularVectors
     # return tensor , singularValues, leftSingularVectors
 
+def hosvd_only_for_dimensions(tensor,tol=None, rtol=None, threshold =1e-8, norm=None, dims=None, batch_dimension=None, contract=False):
+    # TODO: Change name to hosvd and refactor other functions here.
+    if dims is None:
+        dims = list(tensor.shape)
+    if batch_dimension is not None:
+        dims.pop(batch_dimension)
+
+    if (tol is None) and (rtol is not None):
+        if norm is None:
+            norm = np.linalg.norm(tensor)        
+        tol = norm*rtol
+    elif (tol is None) and (rtol is None):
+        tol = 1e-8
+    elif tol is not None:
+        pass
+    else:
+        raise ValueError("Ben de ne oldugunu tam anlamadim ama bi' buraya bak.")
+    
+    if len(tensor.shape) == 2:
+        [u, s, v] = truncated_svd(tensor, truncation_threshold=threshold, full_matrices=False)
+        u = u[:,np.cumsum((s**2)[::-1])[::-1]>(tol)**2]
+        v = v[np.cumsum((s**2)[::-1])[::-1]>(tol)**2,:]
+        s = s[np.cumsum((s**2)[::-1])[::-1]>(tol)**2]
+        return np.diag(s), [u, v.T]
+    
+    leftSingularVectors = []
+    for dimension in dims:
+        [u, s, v] = truncated_svd(
+            mode_n_unfolding(tensor,dimension), truncation_threshold=threshold, full_matrices=False
+        )
+        leftSingularVectors.append(
+            u[:,np.cumsum((s**2)[::-1])[::-1]>(tol)**2]
+        )
+    if contract:
+        2+2
+        for dimension,lsv in zip(dims,leftSingularVectors):
+            dimension_flip = np.arange(len(tensor.shape)-1).tolist()
+            dimension_flip.insert(dimension,len(tensor.shape)-1)
+            tensor = np.tensordot(tensor,lsv,axes=[dimension,0]).transpose(dimension_flip)
+        return tensor, leftSingularVectors
+    
+    return leftSingularVectors
+
 def create_permutations(nDims):
     # Creates permutations to compute the matricizations
     permutations=[]
