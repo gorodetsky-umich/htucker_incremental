@@ -403,7 +403,7 @@ class HTucker:
         batch_count = tensor.shape[batch_dimension]
         if (self._dimension_tree is None) and (dimension_tree is None):
             warn("No dimension tree is given, creating one with binary splitting now...")
-            tree_shape = list(tensor.shape)[:batch_dimension]+list(tensor.shape)[batch_dimension:]
+            tree_shape = list(tensor.shape)[:batch_dimension]+list(tensor.shape)[batch_dimension+1:]
             self._dimension_tree = createDimensionTree(tree_shape,2,1)
         else:
             self._dimension_tree = dimension_tree
@@ -451,7 +451,8 @@ class HTucker:
                         self.leaves[leaf_idx]=ht.TuckerLeaf(matrix=leafs[leaf_ctr],dims=item.val[0],idx=leaf_idx)
                         item._ranks[0]=self.leaves[leaf_idx].shape[-1]
                         item.real_node = self.leaves[leaf_idx]
-                        item.parent._ranks[item.parent._ranks.index(None)]=item.real_node.rank
+                        # item.parent._ranks[item.parent._ranks.index(None)]=item.real_node.rank
+                        item.parent._ranks[item.parent.children.index(item)]=item.real_node.rank
                         leaf_ctr+=1
             # hosvd_dimensions = [item._dimension_index[0] for item in layer if not item._isleaf]
             
@@ -488,7 +489,8 @@ class HTucker:
                 if not item._isleaf:
                     # The current item is a node
                     item._ranks[item._ranks.index(None)]=nodes[node_ctr].shape[-1]
-                    item.parent._ranks[item.parent._ranks.index(None)]=nodes[node_ctr].shape[-1]
+                    # item.parent._ranks[item.parent._ranks.index(None)]=nodes[node_ctr].shape[-1]
+                    item.parent._ranks[item.parent.children.index(item)]=nodes[node_ctr].shape[-1]
                     node = ht.TuckerCore(
                         core=nodes[node_ctr].reshape(item._ranks,order="F"),
                         dims=item.val.copy(),
