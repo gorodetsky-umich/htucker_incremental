@@ -1004,7 +1004,7 @@ class HTucker:
             num_entries+=np.prod(tf.shape)
         for lf in self.leaves:
             num_entries+=np.prod(lf.shape)
-        return np.prod(self.original_shape)/num_entries
+        return np.prod(self.original_shape)*self.batch_count/num_entries
 
         
         
