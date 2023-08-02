@@ -624,9 +624,7 @@ class HTucker:
                 ")"
             )
         return new_tensor
-        
-    
-    def reconstruct(self,core):
+    def reconstruct(self,core,batch=False):
         # if list(new_tensor.shape)!=self.original_shape:
         #     try:
         #         new_tensor = new_tensor.reshape(self.original_shape,order="F")
