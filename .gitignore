@@ -5,3 +5,4 @@ build*
 htucker/bin/*
 htucker/lib*/*
 htucker/share/*
+MsPacmanNoFrameskip-v4/*
