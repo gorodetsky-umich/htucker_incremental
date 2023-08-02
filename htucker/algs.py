@@ -814,8 +814,163 @@ class HTucker:
                 ")"
             )
 
-            
+        return new_tensor
+    def incremental_update_batch(self,new_tensor, batch_dimension= None, append=True):
+        assert(self._iscompressed is True)
+        new_tensor_shape = new_tensor.shape
+        if list(new_tensor_shape[:batch_dimension]+new_tensor_shape[batch_dimension+1:])!=self.original_shape:
+            try:
+                shape = np.arange(len(new_tensor_shape)).tolist()
+                shape.pop(batch_dimension)
+                shape=shape+[batch_dimension]
+                new_tensor.transpose(shape)
+                new_tensor = new_tensor.reshape(self.original_shape+[-1],order="F")
+            except ValueError:
+                2+2
+                # warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
+        
+        core = self.project(new_tensor,batch=True,batch_dimension=batch_dimension)
+        reconstruction = self.reconstruct(core)
+        tenNorm = np.linalg.norm(new_tensor)
+        if (np.linalg.norm(new_tensor-reconstruction)/tenNorm)<=self.rtol:
+            warn('Current tensor network is sufficient, no need to update the cores.')
+            self.batch_count+=new_tensor_shape[batch_dimension]
+            if append:
+                self.root.core = np.concatenate((self.root.core,core),axis=-1)
+                self.root.get_ranks()
+                return None
+            else:
+                return None
+        
 
+
+        allowed_error=tenNorm*self.rtol/np.sqrt(2*len(new_tensor.shape)-3)
+        for layer in self._dimension_tree._level_items[::-1][:-1]:
+            idxCtr = 0
+            for itemIdx, item in enumerate(layer):
+                2+2
+                strings=[]
+                last_char=97
+                dims = len(new_tensor.shape)
+                coreString =[chr(idx) for idx in range(last_char,last_char+dims)]
+                strings.append(''.join(coreString))
+                last_char+=dims
+                
+                contractionDims = len(item.shape)-1
+                # Find Orthonormal vectors
+                if type(item.real_node) is ht.TuckerLeaf:
+                    2+2
+
+                    strings.append(strings[0][idxCtr]+chr(last_char))
+                    strings.append(chr(last_char+contractionDims)+chr(last_char))
+                    coreString[idxCtr]=chr(last_char+contractionDims)
+
+                    tempTens= eval(
+                        "np.einsum("+
+                        "'"+
+                        ",".join([
+                            ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                            "item.real_node.core,item.real_node.core",
+                            # ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                            'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                        )+
+                        ")"
+                    )
+                
+                    tempTens = tempTens-new_tensor
+                    u,s,_ = np.linalg.svd(ht.mode_n_unfolding(tempTens,idxCtr),full_matrices=False)
+                    idxCtr +=1                
+
+                elif type(item.real_node) is ht.TuckerCore:
+                    2+2
+                    strings.append(strings[0][idxCtr:idxCtr+contractionDims]+chr(last_char))
+                    strings.append(
+                        "".join(
+                        [chr(stringIdx+1) for stringIdx in range(last_char,last_char+contractionDims)]
+                        )+chr(last_char)
+                        )
+                    for stringIdx in range(contractionDims):
+                        coreString[idxCtr+stringIdx] = strings[-1][stringIdx]
+                    tempTens= eval(
+                        "np.einsum("+
+                        "'"+
+                        ",".join([
+                            ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                            "item.real_node.core,item.real_node.core",
+                            # ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                            'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                        )+
+                        ")"
+                    )
+                    tempTens = tempTens-new_tensor
+                    new_shape = list(new_tensor.shape)
+                    new_shape = new_shape[:idxCtr]+[np.prod(new_shape[idxCtr:idxCtr+contractionDims])]+new_shape[idxCtr+contractionDims:]
+                    u,s,_ = np.linalg.svd(ht.mode_n_unfolding(tempTens.reshape(new_shape,order="F"),idxCtr),full_matrices=False)
+                    idxCtr +=2
+
+
+
+                else:
+                    ValueError(f"Unknown node type! {type(item)} is not known!")
+
+                # Core Updating
+                u = u[:,np.cumsum((s**2)[::-1])[::-1]>(allowed_error)**2]
+                # s = s[np.cumsum((s**2)[::-1])[::-1]>(allowed_error)**2]
+                u_shape = list(item.shape)[:-1]+[-1]
+                item.real_node.core = np.concatenate((item.real_node.core,u.reshape(u_shape,order="F")),axis=-1)
+                item.real_node.get_ranks()
+
+                # Rank Matching
+                # TODO: Need to update this part after introducing "sibling index" for n-ary splits!
+                if item.parent._dimension_index.index(item._dimension_index[0]) == 0: 
+                    ranks=item.real_parent.ranks
+                    item.real_parent.core = np.concatenate((item.real_parent.core,np.zeros([u.shape[-1]]+ranks[1:])),axis=0)
+                else:
+                    ranks=item.real_parent.ranks
+                    item.real_parent.core = np.concatenate((item.real_parent.core,np.zeros([ranks[0],u.shape[-1]]+ranks[2:])),axis=1)
+                item.real_parent.get_ranks()
+
+            # Project Through Layer
+            # TODO : Convert layerwise projection into a separate function.
+            idxCtr = 0
+            strings=[]
+            last_char=97
+            dims = len(new_tensor.shape)
+            coreString =[chr(idx) for idx in range(last_char,last_char+dims)]
+            strings.append(''.join(coreString))
+            last_char+=dims
+            for itemIdx, item in enumerate(layer):
+                if type(item.real_node) is ht.TuckerLeaf:
+                    # strings.append(strings[0][item._dimension_index[0]]+chr(last_char))
+                    # coreString[item._dimension_index[0]]=chr(last_char)
+                    strings.append(strings[0][idxCtr]+chr(last_char))
+                    coreString[idxCtr]=chr(last_char)
+                    last_char+=1
+                    idxCtr+=1
+                elif type(item.real_node) is ht.TuckerCore:
+                    # icerde ayri minik bir counter tut, leaf olunca 1 core olunca 2 ilerlet olsun bitsin
+                    # counter da her layerda sifirlansin.
+                    contractionDims = len(item.shape)-1
+                    strings.append(strings[0][idxCtr:idxCtr+contractionDims]+chr(last_char))
+                    coreString[idxCtr]=chr(last_char)
+                    last_char+=1
+                    for stringIdx in range(1,contractionDims):
+                        coreString[idxCtr+stringIdx]=""
+                    # last_char += 1
+                    idxCtr += contractionDims
+                else:
+                    ValueError(f"Unknown node type! {type(item)} is not known!")
+            new_tensor = eval(
+                "np.einsum("+
+                "'"+
+                ",".join([
+                    ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                    ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                    'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                )+
+                ")"
+            )
+        self.batch_count+=new_tensor_shape[batch_dimension]
         return new_tensor
 
     def compress_sanity_check(self,tensor):
