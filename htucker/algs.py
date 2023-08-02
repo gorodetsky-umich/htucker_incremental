@@ -141,14 +141,21 @@ class HTucker:
         # self.nodes2Expand=[]
         self._iscompressed=False
         self._dimension_tree = None
+        self.batch_dimension = None
         self.rtol = None 
 
 
-    def initialize(self,tensor,dimension_tree=None, batch=False):
+    def initialize(self,tensor,dimension_tree=None, batch=False, batch_dimension=None):
         self.original_shape = list(tensor.shape)
         if batch: 
             self._leaf_count = len(self.original_shape)-1
+            if batch_dimension is None:
+                batch_dimension = len(self.original_shape)-1
+            self.batch_dimension = batch_dimension
+            self.original_shape = self.original_shape[:batch_dimension]+self.original_shape[batch_dimension+1:]
+            self.batch_count = tensor.shape[batch_dimension]
         else:
+            self.batch_count = 1
             self._leaf_count=len(self.original_shape)
         self._dimension_tree = dimension_tree
         self.leaves = [None]*self._leaf_count
