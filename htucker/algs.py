@@ -563,12 +563,26 @@ class HTucker:
         self._iscompressed=False
         return None
     
-    def project(self,new_tensor):
-        if list(new_tensor.shape)!=self.original_shape:
-            try:
-                new_tensor = new_tensor.reshape(self.original_shape,order="F")
-            except ValueError:
-                warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
+    def project(self,new_tensor,batch=False, batch_dimension = None):
+        assert(self._iscompressed is True)
+        new_tensor_shape = new_tensor.shape
+        if batch:
+            if list(new_tensor_shape[:batch_dimension]+new_tensor_shape[batch_dimension+1:])!=self.original_shape:
+                try:
+                    shape = np.arange(len(new_tensor_shape)).tolist()
+                    shape.pop(batch_dimension)
+                    shape=shape+[batch_dimension]
+                    new_tensor.transpose(shape)
+                    new_tensor = new_tensor.reshape(self.original_shape+[-1],order="F")
+                except ValueError:
+                    warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
+        else:
+            if list(new_tensor_shape)!=self.original_shape:
+                try:
+                    new_tensor = new_tensor.reshape(self.original_shape,order="F")
+                    # 2+2
+                except ValueError:
+                    warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
         
         for layer in self._dimension_tree._level_items[::-1][:-1]:
             idxCtr = 0
