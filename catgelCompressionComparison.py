@@ -7,6 +7,12 @@ import numpy as np
 import DaMAT as dmt
 import htucker as ht
 
+def writer(fileName,fileDir,lines2Print):
+    with open(fileDir+fileName,'a') as txt:
+        txt.writelines(' '.join(lines2Print))
+    lines2Print=[]
+    return lines2Print
+
 cwd = os.getcwd()
 
 ord = "F" 
@@ -45,7 +51,7 @@ metricsFileName = {
     "ht" : f"ht_E"+"".join(format(epsilon,'.2f').split("."))+f"M{motion}"+"S"+"_".join(map(str,data.shape))+".txt",
     "tt" : f"tt_E"+"".join(format(epsilon,'.2f').split("."))+f"M{motion}"+"S"+"_".join(map(str,data.shape))+".txt"
 }
-
+metricsDirectory = "metrics/"
 print(data.shape)
 lines2print = []
 
@@ -165,6 +171,9 @@ if writeMode:
         lines2print.append(f"{tt_testError_overall}") # Overall test error
         lines2print.append(f"{tt_testError_average}") # Average test error
 
+lines2print.append('\n')
+lines2print=writer(metricsFileName,metricsDirectory,lines2print)
+
 for simIdx in range(1,trainSamples):
     # print()
     print(simIdx)
@@ -279,7 +288,8 @@ for simIdx in range(1,trainSamples):
         if tt:
             lines2print.append(f"{tt_testError_overall}")
             lines2print.append(f"{tt_testError_average}")
-
+    lines2print.append('\n')
+    lines2print=writer(metricsFileName,metricsDirectory,lines2print)
     last_ranks = dataSet.ttRanks.copy()
     # print(f"HT Compression Ratio {round(tens.compression_ratio,4)}")
     # print(f"HT Step Time {round(HT_toc,4)}")
