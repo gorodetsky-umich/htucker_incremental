@@ -833,14 +833,14 @@ class HTucker:
         reconstruction = self.reconstruct(core)
         tenNorm = np.linalg.norm(new_tensor)
         if (np.linalg.norm(new_tensor-reconstruction)/tenNorm)<=self.rtol:
-            warn('Current tensor network is sufficient, no need to update the cores.')
+            # print('Current tensor network is sufficient, no need to update the cores.')
             self.batch_count+=new_tensor_shape[batch_dimension]
             if append:
                 self.root.core = np.concatenate((self.root.core,core),axis=-1)
                 self.root.get_ranks()
-                return None
+                return False
             else:
-                return None
+                return False
         
 
 
@@ -970,8 +970,13 @@ class HTucker:
                 )+
                 ")"
             )
-        self.batch_count+=new_tensor_shape[batch_dimension]
-        return new_tensor
+        if append:
+            self.root.core = np.concatenate((self.root.core,new_tensor),axis=-1)
+            self.root.get_ranks()
+            self.batch_count+=new_tensor_shape[batch_dimension]
+            return True
+        else:
+            return True
 
     def compress_sanity_check(self,tensor):
         # Commenting out below for now, might be needed later for checking
