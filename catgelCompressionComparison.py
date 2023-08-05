@@ -22,10 +22,12 @@ initialize = 1
 increment = 1
 motion = 1
 
-tt = True
-htucker = True
+tt = True 
+htucker = False
 
 assert (tt^htucker), "Either one of htucker or tt should be True!"
+mode = "ht" if htucker else "tt"
+print(mode)
 
 checkTestErr = True
 checkTrainErr = True
@@ -37,13 +39,15 @@ trainDM = "3rd"
 testDM = "5th"
 
 dataLocation = {
-    "train" : f"/home/doruk/bayesianOED/catgelData/{trainDM}/{motion}/",
-    "test"  : f"/home/doruk/bayesianOED/catgelData/{testDM}/{motion}/",
+    "train" : f"/home/dorukaks/bayesianOED/catgelData/{trainDM}/{motion}/",
+    "test"  : f"/home/dorukaks/bayesianOED/catgelData/{testDM}/{motion}/",
 }
 testSamples = 15000
 trainSamples = 6400
 
-data = np.load(dataLocation["train"]+f"catgelData_{0}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+totalTic = time.time()
+
+data = np.load(dataLocation["train"]+f"catgelData_{0}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
 batch_along=len(data.shape)-1
 dataNorm = np.linalg.norm(data)
 
@@ -79,7 +83,7 @@ if htucker:
     )
     HT_toc = time.time()-tic 
     HT_time = HT_toc
-    data_rec = tens.reconstruct(tens.root.core[:,:,-1])
+    data_rec = tens.reconstruct(tens.root.core[:,:,-data.shape[-1]:])
     data_relErr = np.linalg.norm(data_rec-data)/dataNorm
     ht_trainError.append(
         (dataNorm, data_relErr)
@@ -138,17 +142,17 @@ if checkTestErr:
     if htucker:
         ht_testError = []
         for testIdx in range(testSamples):
-            data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+            data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
             dataNorm = np.linalg.norm(data)
             ht_testError.append(
-                (dataNorm, np.linalg.norm(tens.reconstruct(tens.project(data))-data)/dataNorm)
+                (dataNorm, np.linalg.norm(tens.reconstruct(tens.project(data,batch=True,batch_dimension=batch_along))-data)/dataNorm)
             )
         ht_testError_overall = np.sqrt(np.square(np.prod(ht_testError,axis=-1)).sum())/np.sqrt(np.square(ht_testError).sum(0)[0])
         ht_testError_average = np.mean(ht_testError,axis=0)[-1]
     if tt:
         tt_testError = []
         for testIdx in range(testSamples):
-            data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+            data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
             dataNorm = np.linalg.norm(data)
             tt_testError.append(
                 (dataNorm, dataSet.computeRelError(data))
@@ -167,17 +171,19 @@ if writeMode:
     if htucker:
         lines2print.append(f"{ht_testError_overall}") # Overall test error
         lines2print.append(f"{ht_testError_average}") # Average test error
+        lines2print.append(f"{tens.compression_ratio}") # Compression ratio
     if tt:
         lines2print.append(f"{tt_testError_overall}") # Overall test error
         lines2print.append(f"{tt_testError_average}") # Average test error
+        lines2print.append(f"{dataSet.compressionRatio}") # Compression ratio
 
 lines2print.append('\n')
-lines2print=writer(metricsFileName,metricsDirectory,lines2print)
+lines2print=writer(metricsFileName[mode],metricsDirectory,lines2print)
 
 for simIdx in range(1,trainSamples):
     # print()
-    print(simIdx)
-    data = np.load(dataLocation["train"]+f"catgelData_{simIdx}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+    # print(simIdx)
+    data = np.load(dataLocation["train"]+f"catgelData_{simIdx}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
     dataNorm = np.linalg.norm(data)
     if tt:
         if checkPointwiseErr:
@@ -217,7 +223,7 @@ for simIdx in range(1,trainSamples):
 
     if htucker:
         if checkPointwiseErr:
-            ht_pwError_pre = np.linalg.norm(tens.reconstruct(tens.project(data))-data)/dataNorm
+            ht_pwError_pre = np.linalg.norm(tens.reconstruct(tens.project(data,batch=True,batch_dimension=batch_along))-data)/dataNorm
         else:
             ht_pwError_pre = "-"
         tic = time.time()
@@ -228,7 +234,7 @@ for simIdx in range(1,trainSamples):
         )
         HT_toc = time.time()-tic 
         HT_time += HT_toc
-        data_rec = tens.reconstruct(tens.root.core[:,:,-1])
+        data_rec = tens.reconstruct(tens.root.core[:,:,-data.shape[-1]:])
         data_relErr = np.linalg.norm(data_rec-data)/dataNorm
         ht_trainError.append(
             (dataNorm, data_relErr)
@@ -242,7 +248,7 @@ for simIdx in range(1,trainSamples):
         if writeMode:
             lines2print.append(f"{data.shape[-1]}") # Number of samples in batch
             lines2print.append(f"{dataNorm}") # Norm of the batch
-            lines2print.append(f"{TT_toc}") # Time to update
+            lines2print.append(f"{HT_toc}") # Time to update
             lines2print.append(f"{ht_pwError_pre}") # Projection error before update
             lines2print.append(f"{ht_pwError_post}") # Projection error after update
             lines2print.append(f"{ht_trainError_overall}") # Overall training error
@@ -250,24 +256,24 @@ for simIdx in range(1,trainSamples):
     if checkTestErr:
         if htucker:
             if ht_updateFlag:
-                pass
-            else:
                 ht_testError = []
                 for testIdx in range(testSamples):
-                    data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+                    data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
                     dataNorm = np.linalg.norm(data)
                     ht_testError.append(
-                        (dataNorm, np.linalg.norm(tens.reconstruct(tens.project(data))-data)/dataNorm)
+                        (dataNorm, np.linalg.norm(tens.reconstruct(tens.project(data,batch=True,batch_dimension=batch_along))-data)/dataNorm)
                     )
                 ht_testError_overall = np.sqrt(np.square(np.prod(ht_testError,axis=-1)).sum())/np.sqrt(np.square(ht_testError).sum(0)[0])
                 ht_testError_average = np.mean(ht_testError,axis=0)[-1]
+            else:
+                pass
         if tt:
             if last_ranks == dataSet.ttRanks:
                 pass
             else:
                 tt_testError = []
                 for testIdx in range(testSamples):
-                    data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").transpose(0,1,2,4,3)#.reshape(3367,10,3,-1).transpose(1,2,0,3)#[...,None]
+                    data = np.load(dataLocation["test"]+f"catgelData_{testIdx}.npy").reshape(3367,10,3,-1).transpose(1,2,0,3)#.transpose(0,1,2,4,3)#[...,None]
                     dataNorm = np.linalg.norm(data)
                     tt_testError.append(
                         (dataNorm, dataSet.computeRelError(data))
@@ -285,20 +291,24 @@ for simIdx in range(1,trainSamples):
         if htucker:
             lines2print.append(f"{ht_testError_overall}")
             lines2print.append(f"{ht_testError_average}")
+            lines2print.append(f"{tens.compression_ratio}") # Compression ratio
         if tt:
             lines2print.append(f"{tt_testError_overall}")
             lines2print.append(f"{tt_testError_average}")
+            lines2print.append(f"{dataSet.compressionRatio}") # Compression ratio
     lines2print.append('\n')
-    lines2print=writer(metricsFileName,metricsDirectory,lines2print)
-    last_ranks = dataSet.ttRanks.copy()
+    lines2print=writer(metricsFileName[mode],metricsDirectory,lines2print)
+    if tt:
+        last_ranks = dataSet.ttRanks.copy()
     # print(f"HT Compression Ratio {round(tens.compression_ratio,4)}")
     # print(f"HT Step Time {round(HT_toc,4)}")
     # print(f"HT Total Time {round(HT_time,4)}")
-    
-print(f"TT Compression Ratio {round(dataSet.compressionRatio,4)}")
-print(f"TT Total Time {round(TT_time,4)}")
-print(f"HT Compression Ratio {round(tens.compression_ratio,4)}")
-print(f"HT Total Time {round(HT_time,4)}")
-
+if tt:
+    print(f"TT Compression Ratio {round(dataSet.compressionRatio,4)}")
+    print(f"TT Total Time {round(TT_time,4)}")
+if htucker:    
+    print(f"HT Compression Ratio {round(tens.compression_ratio,4)}")
+    print(f"HT Total Time {round(HT_time,4)}")
+print(f"Overall time {round(time.time()-totalTic,4)}")
 
 
