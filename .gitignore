@@ -7,3 +7,4 @@ htucker/lib*/*
 htucker/share/*
 MsPacmanNoFrameskip-v4/*
 metrics/*
+.env/
