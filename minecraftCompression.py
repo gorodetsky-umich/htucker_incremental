@@ -10,7 +10,7 @@ import htucker as ht
 cwd = os.getcwd()
 
 directories = {
-    "video" : "/media/doruk/Database/minecraftData/",
+    "video" : "/Users/doruk/data/",
     "core"  : "/media/doruk/Database/minecraftCores/",
     "save"  : "/.",
     "metric": cwd+"/experiments/minecraft",
@@ -19,11 +19,14 @@ directories = {
 videoFiles = glob.glob(directories["video"]+"*.mp4")
 print(len(videoFiles))
 ord = "F"
-epsilon = 0.01
+epsilon = 0.3
 initialize = 1
 increment = 1
 newShape = [6,6,10,10,8,8,3]
+newShape = [3,4,5,6,10,8,8,3]
 newShape = [18,20,32,20,3]
+newShape = [3,18,20,32,20] # Uncomment this line with transposes
+newShape = [3,6,6,10,10,8,8] # Uncomment this line with transposes
 
 totTime = 0
 frameCtr = 1
@@ -32,6 +35,7 @@ totFrameCtr = 1
 
 video = cv2.VideoCapture(videoFiles[0])
 success , image = video.read()
+image = image.transpose(2,0,1)
 image = image.reshape(newShape, order=ord)[...,None]
 batch_along = len(image.shape)-1
 print(image.shape)
@@ -58,13 +62,15 @@ frames.compress_leaf2root_batch(
 
 toc = time.time()-tic
 totTime += toc
-print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
-print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+# print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
+# print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
 print(frames.root.core.shape)
 
 while success:
     success , image = video.read()
     try:
+        image = image.transpose(2,0,1)
         image = image.reshape(newShape, order=ord)[...,None]
         tic = time.time()
         frames.incremental_update_batch(
@@ -74,11 +80,12 @@ while success:
         )
         toc = time.time()-tic
         totTime += toc
-        print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
-        print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+        # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
+        # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+        print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
         frameCtr += 1
         totFrameCtr += 1
-    except TypeError:
+    except Exception:
         pass
 print(videoCtr,frameCtr,totFrameCtr)
 print(frames.root.core.shape)
@@ -87,6 +94,7 @@ videoCtr +=1
 for videoFile in videoFiles[1:]:
     video = cv2.VideoCapture(videoFiles[0])
     success , image = video.read()
+    image = image.transpose(2,0,1)
     image = image.reshape(newShape, order=ord)[...,None]
     tic = time.time()
     frames.incremental_update_batch(
@@ -96,11 +104,13 @@ for videoFile in videoFiles[1:]:
     )
     toc = time.time()-tic
     totTime += toc
-    print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
-    print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+    # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
+    # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+    print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
     while success:
         success , image = video.read()
         try:
+            image = image.transpose(2,0,1)
             image = image.reshape(newShape, order=ord)[...,None]
             tic = time.time()
             frames.incremental_update_batch(
@@ -110,11 +120,12 @@ for videoFile in videoFiles[1:]:
             )
             toc = time.time()-tic
             totTime += toc
-            print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
-            print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+            # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
+            # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
+            print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
             frameCtr += 1
             totFrameCtr += 1
-        except TypeError:
+        except Exception:
             pass
     print(videoCtr,frameCtr,totFrameCtr)
     print(frames.root.core.shape)
