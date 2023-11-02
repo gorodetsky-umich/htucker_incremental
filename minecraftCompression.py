@@ -74,7 +74,7 @@ totTime += toc
 # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
 print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
 print(frames.root.core.shape)
-
+updCtr = 0
 while success:
     success , image = video.read()
     try:
@@ -83,7 +83,7 @@ while success:
         # image = image.reshape(resizeReshape, order=ord)[...,None]
         image = image.reshape(newShape, order=ord)[...,None]
         tic = time.time()
-        frames.incremental_update_batch(
+        updFlag = frames.incremental_update_batch(
             image,
             batch_dimension = batch_along,
             append = True,
@@ -106,7 +106,7 @@ while success:
 print(videoCtr,frameCtr,totFrameCtr)
 print(frames.root.core.shape)
 videoCtr +=1
-
+print(updCtr)
 for videoFile in videoFiles[1:]:
     video = cv2.VideoCapture(videoFiles[0])
     success , image = video.read()
@@ -133,13 +133,14 @@ for videoFile in videoFiles[1:]:
             # image = image.reshape(resizeReshape, order=ord)[...,None]
             image = image.reshape(newShape, order=ord)[...,None]
             tic = time.time()
-            frames.incremental_update_batch(
+            updFlag = frames.incremental_update_batch(
                 image,
                 batch_dimension = batch_along,
                 append = True,
             )
             toc = time.time()-tic
             totTime += toc
+            updCtr += updFlag*1
             # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
             # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
             print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
@@ -151,4 +152,5 @@ for videoFile in videoFiles[1:]:
             pass
     print(videoCtr,frameCtr,totFrameCtr)
     print(frames.root.core.shape)
+    print(updCtr,frames.batch_count)
     videoCtr +=1
