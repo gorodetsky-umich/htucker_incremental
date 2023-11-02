@@ -1024,6 +1024,7 @@ class HTucker:
                     ")"
                 )
             except ValueError:
+                for ii, string in enumerate(strings):
                     tempstr = [*string]
                     for jj, chrs in enumerate(tempstr):
                             if ord(chrs)>ord("z"):
@@ -1075,7 +1076,7 @@ class HTucker:
 
     @property
     def compression_ratio(self):
-        num_entries=np.prod(self.root.shape)
+        num_entries=np.prod(self.root.shape)*self.batch_count
         for tf in self.transfer_nodes:
             num_entries+=np.prod(tf.shape)
         for lf in self.leaves:
