@@ -8,3 +8,5 @@ htucker/share/*
 MsPacmanNoFrameskip-v4/*
 metrics/*
 .env/
+frames/
+*.mp4
