@@ -596,6 +596,8 @@ class HTucker:
                 if type(item.real_node) is ht.TuckerLeaf:
                     # strings.append(strings[0][item._dimension_index[0]]+chr(last_char))
                     # coreString[item._dimension_index[0]]=chr(last_char)
+                    if (item in self._dimension_tree._level_items[-1]) and (item.real_node.leaf_idx != idxCtr):
+                        idxCtr+=1 
                     strings.append(strings[0][idxCtr]+chr(last_char))
                     coreString[idxCtr]=chr(last_char)
                     last_char+=1
@@ -642,9 +644,13 @@ class HTucker:
             for itemIdx, item in enumerate(layer):
                 if type(item.real_node) is ht.TuckerLeaf:
                     tempStr = chr(last_char)
-
-                    strings.append(tempStr+strings[0][itemIdx])
-                    coreString[itemIdx]=tempStr
+                    if (item in self._dimension_tree._level_items[-1]) and (item.real_node.leaf_idx != itemIdx):
+                        strings.append(tempStr+strings[0][item.real_node.leaf_idx])
+                        coreString[item.real_node.leaf_idx]=tempStr
+                        # idxCtr+=1 
+                    else:
+                        strings.append(tempStr+strings[0][itemIdx])
+                        coreString[itemIdx]=tempStr
                     last_char+=1
                     # idxCtr+=1
                 elif type(item.real_node) is ht.TuckerCore:
@@ -786,6 +792,8 @@ class HTucker:
                 if type(item.real_node) is ht.TuckerLeaf:
                     # strings.append(strings[0][item._dimension_index[0]]+chr(last_char))
                     # coreString[item._dimension_index[0]]=chr(last_char)
+                    if (item in self._dimension_tree._level_items[-1]) and (item.real_node.leaf_idx != idxCtr):
+                        idxCtr+=1 
                     strings.append(strings[0][idxCtr]+chr(last_char))
                     coreString[idxCtr]=chr(last_char)
                     last_char+=1
@@ -860,7 +868,8 @@ class HTucker:
                 # Find Orthonormal vectors
                 if type(item.real_node) is ht.TuckerLeaf:
                     2+2
-
+                    if (item in self._dimension_tree._level_items[-1]) and (item.real_node.leaf_idx != idxCtr):
+                        idxCtr+=1 
                     strings.append(strings[0][idxCtr]+chr(last_char))
                     strings.append(chr(last_char+contractionDims)+chr(last_char))
                     coreString[idxCtr]=chr(last_char+contractionDims)
@@ -943,6 +952,8 @@ class HTucker:
                 if type(item.real_node) is ht.TuckerLeaf:
                     # strings.append(strings[0][item._dimension_index[0]]+chr(last_char))
                     # coreString[item._dimension_index[0]]=chr(last_char)
+                    if (item in self._dimension_tree._level_items[-1]) and (item.real_node.leaf_idx != idxCtr):
+                        idxCtr+=1 
                     strings.append(strings[0][idxCtr]+chr(last_char))
                     coreString[idxCtr]=chr(last_char)
                     last_char+=1
