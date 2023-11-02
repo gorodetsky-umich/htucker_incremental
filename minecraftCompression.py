@@ -100,6 +100,9 @@ while success:
         totFrameCtr += 1
     except cv2.error:
         pass
+    except AttributeError:
+    #     # print(2)
+        pass
 print(videoCtr,frameCtr,totFrameCtr)
 print(frames.root.core.shape)
 videoCtr +=1
@@ -143,6 +146,8 @@ for videoFile in videoFiles[1:]:
             frameCtr += 1
             totFrameCtr += 1
         except cv2.error:
+            pass
+        except AttributeError:
             pass
     print(videoCtr,frameCtr,totFrameCtr)
     print(frames.root.core.shape)
