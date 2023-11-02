@@ -615,16 +615,36 @@ class HTucker:
                     idxCtr += contractionDims
                 else:
                     ValueError(f"Unknown node type! {type(item)} is not known!")
-            new_tensor = eval(
-                "np.einsum("+
-                "'"+
-                ",".join([
-                    ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
-                    ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
-                    'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
-                )+
-                ")"
-            )
+            try:
+                new_tensor = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
+            except ValueError:
+                for ii, string in enumerate(strings):
+                    tempstr = [*string]
+                    for jj, chrs in enumerate(tempstr):
+                            if ord(chrs)>ord("z"):
+                                    strings[ii]=strings[ii].replace(chrs,chr(ord(chrs)-ord("z")+ord("A")-1),jj)
+                for jj, chrs in enumerate(coreString):
+                    if ord(chrs)>ord("z"):
+                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                new_tensor = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
         return new_tensor
     def reconstruct(self,core,batch=False):
         # if list(new_tensor.shape)!=self.original_shape:
@@ -665,16 +685,37 @@ class HTucker:
                     # idxCtr += contractionDims
                 else:
                     ValueError(f"Unknown node type! {type(item)} is not known!")
-            core = eval(
-                "np.einsum("+
-                "'"+
-                ",".join([
-                    ','.join(strings)+'->'+"".join(coreString)+"'",'core',
-                    ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
-                    'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
-                )+
-                ")"
-            )
+            try:
+                core = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'core',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
+            except ValueError:
+                for ii, string in enumerate(strings):
+                    tempstr = [*string]
+                    for jj, chrs in enumerate(tempstr):
+                            if ord(chrs)>ord("z"):
+                                    tempstr[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                                    strings[ii]="".join(tempstr)
+                for jj, chrs in enumerate(coreString):
+                    if ord(chrs)>ord("z"):
+                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                core = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'core',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
             
         return core
     
@@ -971,16 +1012,35 @@ class HTucker:
                     idxCtr += contractionDims
                 else:
                     ValueError(f"Unknown node type! {type(item)} is not known!")
-            new_tensor = eval(
-                "np.einsum("+
-                "'"+
-                ",".join([
-                    ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
-                    ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
-                    'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
-                )+
-                ")"
-            )
+            try:
+                new_tensor = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
+            except ValueError:
+                    tempstr = [*string]
+                    for jj, chrs in enumerate(tempstr):
+                            if ord(chrs)>ord("z"):
+                                    strings[ii]=strings[ii].replace(chrs,chr(ord(chrs)-ord("z")+ord("A")-1),jj)
+                for jj, chrs in enumerate(coreString):
+                    if ord(chrs)>ord("z"):
+                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                new_tensor = eval(
+                    "np.einsum("+
+                    "'"+
+                    ",".join([
+                        ','.join(strings)+'->'+"".join(coreString)+"'",'new_tensor',
+                        ",".join([f"layer[{idx}].real_node.core" for idx in range(len(layer))]),
+                        'optimize=True,order="F"'] ## Bir sorun olursa buraya bak order="F" sonradan eklendi
+                    )+
+                    ")"
+                )
         if append:
             self.root.core = np.concatenate((self.root.core,new_tensor),axis=-1)
             self.root.get_ranks()

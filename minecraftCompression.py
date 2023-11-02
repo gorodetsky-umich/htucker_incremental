@@ -80,6 +80,7 @@ while success:
         )
         toc = time.time()-tic
         totTime += toc
+        updCtr += updFlag*1
         # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
         # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
         print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
@@ -97,13 +98,14 @@ for videoFile in videoFiles[1:]:
     image = image.transpose(2,0,1)
     image = image.reshape(newShape, order=ord)[...,None]
     tic = time.time()
-    frames.incremental_update_batch(
+    updFlag = frames.incremental_update_batch(
         image,
         batch_dimension = batch_along,
         append = True,
     )
     toc = time.time()-tic
     totTime += toc
+    updCtr += updFlag*1
     # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
     # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
     print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
