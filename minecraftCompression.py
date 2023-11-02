@@ -86,7 +86,7 @@ while success:
         updFlag = frames.incremental_update_batch(
             image,
             batch_dimension = batch_along,
-            append = True,
+            append = False,
         )
         toc = time.time()-tic
         # image_rec = frames.reconstruct(frames.root.core[...,-1]).reshape(resizeShape+[-1],order=ord).astype(np.uint8)
@@ -118,7 +118,7 @@ for videoFile in videoFiles[1:]:
     updFlag = frames.incremental_update_batch(
         image,
         batch_dimension = batch_along,
-        append = True,
+        append = False,
     )
     toc = time.time()-tic
     totTime += toc
