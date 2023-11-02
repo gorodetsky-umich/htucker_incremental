@@ -25,8 +25,10 @@ increment = 1
 newShape = [6,6,10,10,8,8,3]
 newShape = [3,4,5,6,10,8,8,3]
 newShape = [18,20,32,20,3]
-newShape = [3,18,20,32,20] # Uncomment this line with transposes
-newShape = [3,6,6,10,10,8,8] # Uncomment this line with transposes
+resizeShape = [128,128]
+resizeReshape = [4,8,8,8,8,3]
+resizeReshape = [2,2,2,4,4,2,4,2,2,4,3]
+resizeReshape = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,3]
 
 totTime = 0
 frameCtr = 1
@@ -35,7 +37,9 @@ totFrameCtr = 1
 
 video = cv2.VideoCapture(videoFiles[0])
 success , image = video.read()
-image = image.transpose(2,0,1)
+# image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+# print(type(image),image.dtype,image.shape)
+# image = image.reshape(resizeReshape, order=ord)[...,None]
 image = image.reshape(newShape, order=ord)[...,None]
 batch_along = len(image.shape)-1
 print(image.shape)
@@ -70,7 +74,8 @@ print(frames.root.core.shape)
 while success:
     success , image = video.read()
     try:
-        image = image.transpose(2,0,1)
+        # image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+        # image = image.reshape(resizeReshape, order=ord)[...,None]
         image = image.reshape(newShape, order=ord)[...,None]
         tic = time.time()
         frames.incremental_update_batch(
@@ -95,7 +100,9 @@ videoCtr +=1
 for videoFile in videoFiles[1:]:
     video = cv2.VideoCapture(videoFiles[0])
     success , image = video.read()
-    image = image.transpose(2,0,1)
+    # image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+    # image = image.reshape(resizeReshape, order=ord)[...,None]
+    # print(image.shape,type(image))
     image = image.reshape(newShape, order=ord)[...,None]
     tic = time.time()
     updFlag = frames.incremental_update_batch(
@@ -112,7 +119,8 @@ for videoFile in videoFiles[1:]:
     while success:
         success , image = video.read()
         try:
-            image = image.transpose(2,0,1)
+            # image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+            # image = image.reshape(resizeReshape, order=ord)[...,None]
             image = image.reshape(newShape, order=ord)[...,None]
             tic = time.time()
             frames.incremental_update_batch(
