@@ -1045,7 +1045,6 @@ class HTucker:
         if append:
             self.root.core = np.concatenate((self.root.core,new_tensor),axis=-1)
             self.root.get_ranks()
-            self.batch_count+=new_tensor_shape[batch_dimension]
             return True
         else:
             return True
