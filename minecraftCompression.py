@@ -13,7 +13,7 @@ directories = {
     "video" : "/Users/doruk/data/",
     "core"  : "/media/doruk/Database/minecraftCores/",
     "save"  : "/.",
-    "metric": cwd+"/experiments/minecraft",
+    "image" : cwd+"/frames/",
 }
 
 videoFiles = glob.glob(directories["video"]+"*.mp4")
@@ -38,6 +38,7 @@ totFrameCtr = 1
 video = cv2.VideoCapture(videoFiles[0])
 success , image = video.read()
 # image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+# cv2.imwrite(directories["image"]+f"original_ds/{0}.jpg",image)
 # print(type(image),image.dtype,image.shape)
 # image = image.reshape(resizeReshape, order=ord)[...,None]
 image = image.reshape(newShape, order=ord)[...,None]
@@ -66,6 +67,9 @@ frames.compress_leaf2root_batch(
 
 toc = time.time()-tic
 totTime += toc
+# image_rec = frames.reconstruct(frames.root.core[...,-1]).reshape(resizeShape+[-1],order=ord).astype(np.uint8)
+# print(type(image_rec),image_rec.dtype,image_rec.shape)
+# cv2.imwrite(directories["image"]+f"eps030/{0}.jpg",image_rec)
 # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
 # print(f"Compression ratio: {round(frames.compression_ratio , 4)}")
 print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
@@ -75,6 +79,7 @@ while success:
     success , image = video.read()
     try:
         # image = cv2.resize(image,resizeShape,interpolation=cv2.INTER_LINEAR)
+        # cv2.imwrite(directories["image"]+f"original_ds/{frameCtr}.jpg",image)
         # image = image.reshape(resizeReshape, order=ord)[...,None]
         image = image.reshape(newShape, order=ord)[...,None]
         tic = time.time()
@@ -84,6 +89,8 @@ while success:
             append = True,
         )
         toc = time.time()-tic
+        # image_rec = frames.reconstruct(frames.root.core[...,-1]).reshape(resizeShape+[-1],order=ord).astype(np.uint8)
+        # cv2.imwrite(directories["image"]+f"eps030/{frameCtr}.jpg",image_rec)
         totTime += toc
         updCtr += updFlag*1
         # print(f"Compressed in: {round(toc , 3)}. Total time: {round(totTime , 3)}")
