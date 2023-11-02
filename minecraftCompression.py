@@ -85,7 +85,7 @@ while success:
         print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
         frameCtr += 1
         totFrameCtr += 1
-    except Exception:
+    except cv2.error:
         pass
 print(videoCtr,frameCtr,totFrameCtr)
 print(frames.root.core.shape)
@@ -125,7 +125,7 @@ for videoFile in videoFiles[1:]:
             print(f"{videoCtr} {frameCtr} {round(toc , 3)} {round(totTime , 3)} {round(frames.compression_ratio, 4)}")
             frameCtr += 1
             totFrameCtr += 1
-        except Exception:
+        except cv2.error:
             pass
     print(videoCtr,frameCtr,totFrameCtr)
     print(frames.root.core.shape)
