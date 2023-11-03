@@ -2,6 +2,7 @@
 
 import numpy as np
 import htucker as ht
+import pickle as pckl
 
 from math import ceil
 from warnings import warn
@@ -1083,6 +1084,76 @@ class HTucker:
             num_entries+=np.prod(lf.shape)
         return np.prod(self.original_shape)*self.batch_count/num_entries
 
+    def save(self, fileName, fileType="hto", directory = "./"):
+        """
+        This method saves the object (self) into a file with Hierarchal Tucker Object (.hto) format as default.
+        
+        Args:
+            fileName (str): This argument provides the filename to save the object. The filename can include the type of the file.
+            fileType (str, optional): This defines the type of the file. The default file type is "hto".
+            directory (str, optional): This is the location where the file will be saved. Default location is the current directory.
+            
+        Raises:
+            NameError: Raises Name Error if fileName has more than one '.' or unknown file extension is provided.
+            NotImplementedError: Raises NotImplementedError when fileType is "npy" as it is currently not supported.
+        """
+        if len(fileName.split("."))==2:
+            #File extension is given in the file name
+            fileType = fileName.split(".")[1]
+        elif len(fileName.split("."))>=2:
+            raise NameError(f"Filename {fileName} can not have more than 1 '.'!")
+        else:
+            fileName = fileName+"."+fileType
+
+        if fileType == "hto":
+            # Save to a hierarcichal tucker object file
+            with open(directory + fileName, 'wb') as f:
+                pckl.dump(self, f)
+        elif fileType == "npy":
+            # TODO
+            # Save htucker object to numpy arrays
+            # This will require saving the dimension tree as well
+            # Maybe you can adopt a layer-by-layer approach to that 
+            raise NotImplementedError("This function is not implemented yet")
+        else:
+            raise NameError(f"Unknown file extension {fileType}")
+    
+    @staticmethod
+    def load(file, directory = "./"):
+        """
+        This static method loads a Hierarchal Tucker Object from a file. The directory parameter takes the path to the file.
+        
+        Args:
+            file (str): The name of the file that is going to be loaded. The directory path should be given separately. File argument should not contain path.
+            directory (str, optional): Directory path to the file. By default, it is set to the current directory.
+            
+        Returns:
+            It returns the loaded Hierarchal Tucker Object.
+            
+        Raises:
+            AssertionError: Raises an assertion error if the file name contains a '/'.
+            NameError: Raises Name Error if fileName has more than one '.' or unknown file extension is provided.
+            NotImplementedError: Raises NotImplementedError when fileType is "npy" as it is currently not supported.
+        """
+        # File address should be given as directory variable
+        assert len(file.split("/"))==1 , "Please give address as directory variable."
+        if len(file.split("."))==2:
+            #File extension is given in the file name
+            _ , fileType = file.split(".")
+        elif len(file.split("."))>=2:
+            raise NameError(f"Filename {file} can not have more than 1 '.'!")
+        
+        if fileType == "hto":
+            # File is a hierarcichal tucker object file
+            with open(directory+file, 'rb') as f:
+                return pckl.load(f)
+        elif fileType == "npy":
+            # TODO
+            # Load htucker object using numpy arrays
+            # This will require an accompanying dimension tree file
+            raise NotImplementedError("This function is not implemented yet")
+        else:
+            raise NameError(f"Unknown file extension {fileType}")
         
         
 def truncated_svd(a, truncation_threshold=None, full_matrices=True, compute_uv=True, hermitian=False):

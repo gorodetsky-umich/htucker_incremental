@@ -4,6 +4,8 @@ import random
 import numpy as np
 import htucker as ht
 
+from unittest.mock import patch, mock_open
+
 seed =1905
 np.random.seed(seed)
 random.seed(seed)
@@ -308,6 +310,74 @@ class TestCase(unittest.TestCase):
         tens.reconstruct()
         self.assertTrue(np.allclose((tens.root.core-tensor),np.zeros_like(tensor)))
         
+class TestSaveFunction(unittest.TestCase):
+    @patch("pickle.dump")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_function_with_file_extension(self, mock_file, mock_dump):
+        instance = ht.HTucker()  # Assuming you have a default constructor
+        instance.save("test.hto")
+
+        # Assert the file was opened in write-binary mode
+        mock_file.assert_called_once_with("./test.hto", "wb")
+
+        # Assert the pickle.dump was called with the class instance and file handle
+        mock_dump.assert_called_once_with(instance, mock_file.return_value)
+        
+    @patch("pickle.dump")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_save_function_without_file_extension(self, mock_file, mock_dump):
+        instance = ht.HTucker()  # Assuming you have a default constructor
+        instance.save("test")
+
+        # Assert the file was opened in write-binary mode
+        mock_file.assert_called_once_with("./test.hto", "wb")
+
+        # Assert the pickle.dump was called with the class instance and file handle
+        mock_dump.assert_called_once_with(instance, mock_file.return_value)
+
+    def test_raises_exception_when_filename_has_more_than_one_dot(self):
+        instance = ht.HTucker()
+        self.assertRaises(NameError, instance.save, "test.invalid.hto")
+
+    def test_raises_exception_when_unknown_file_extension(self):
+        instance = ht.HTucker()
+        self.assertRaises(NameError, instance.save, "test.unknown")
+
+    def test_raises_not_implemented_error_with_npy_file_extension(self):
+        instance = ht.HTucker()
+        self.assertRaises(NotImplementedError, instance.save, "test.npy")
+
+
+class TestLoadFunction(unittest.TestCase):
+
+    @patch("pickle.load")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_load_function(self, mock_file, mock_load):
+        # Assuming load returns an instance of ht.HTucker
+        mock_load.return_value = ht.HTucker()
+        
+        result = ht.HTucker.load("test.hto")
+        
+        mock_file.assert_called_once_with("./test.hto", "rb")
+        mock_load.assert_called_once()
+        self.assertIsInstance(result, ht.HTucker)
+
+    def test_raises_assertion_error_when_file_contains_slash(self):
+        with self.assertRaises(AssertionError):
+            ht.HTucker.load("wrong/path.hto")
+
+    def test_raises_name_error_when_more_than_one_dot_in_filename(self):
+        with self.assertRaises(NameError):
+            ht.HTucker.load("test.invalid.hto")
+
+    def test_raises_name_error_with_unknown_file_extension(self):
+        with self.assertRaises(NameError):
+            ht.HTucker.load("test.unknown")
+
+    def test_raises_not_implemented_error_with_npy_file_extension(self):
+        with self.assertRaises(NotImplementedError):
+             ht.HTucker.load("test.npy")
+
 def create_nway_tensor(num_dim=None, dims=None):
     np.random.seed(seed)
     # Creates a random n-dimensional tensor
