@@ -2,6 +2,7 @@
 
 import numpy as np
 import htucker as ht
+import pickle as pckl
 
 from math import ceil
 from warnings import warn
@@ -1103,9 +1104,25 @@ class HTucker:
             raise NameError(f"Unknown file extension {fileType}")
     
     @staticmethod
-    def load(file):
+    def load(file, directory = "./"):
+        # File address should be given as directory variable
+        assert len(file.split("/"))==1 , "Please give address as directory variable."
+        if len(file.split("."))==2:
+            #File extension is given in the file name
+            _ , fileType = file.split(".")
+        elif len(file.split("."))>=2:
+            raise NameError(f"Filename {file} can not have more than 1 '.'!")
         
-        return None
+        if fileType == "hto":
+            # File is a hierarcichal tucker object file
+            return pckl.load(directory+file)
+        elif fileType == "npy":
+            # TODO
+            # Load htucker object using numpy arrays
+            # This will require an accompanying dimension tree file
+            raise NotImplementedError("This function is not implemented yet")
+        else:
+            raise NameError(f"Unknown file extension {fileType}")
         
         
 def truncated_svd(a, truncation_threshold=None, full_matrices=True, compute_uv=True, hermitian=False):
