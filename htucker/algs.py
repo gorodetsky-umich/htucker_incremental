@@ -1102,7 +1102,9 @@ class HTucker:
             fileType = fileName.split(".")[1]
         elif len(fileName.split("."))>=2:
             raise NameError(f"Filename {fileName} can not have more than 1 '.'!")
-        
+        else:
+            fileName = fileName+"."+fileType
+
         if fileType == "hto":
             # Save to a hierarcichal tucker object file
             with open(directory + fileName, 'wb') as f:
