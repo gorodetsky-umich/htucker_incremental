@@ -1083,9 +1083,24 @@ class HTucker:
             num_entries+=np.prod(lf.shape)
         return np.prod(self.original_shape)*self.batch_count/num_entries
 
-    def save(self, fileName, fileType=".hto"):
-
-        return None
+    def save(self, fileName, fileType="hto", directory = "./"):
+        if len(fileName.split("."))==2:
+            #File extension is given in the file name
+            fileType = fileName.split(".")[1]
+        elif len(fileName.split("."))>=2:
+            raise NameError(f"Filename {fileName} can not have more than 1 '.'!")
+        
+        if fileType == "hto":
+            # Save to a hierarcichal tucker object file
+            pckl.dump(directory + fileName)
+        elif fileType == "npy":
+            # TODO
+            # Save htucker object to numpy arrays
+            # This will require saving the dimension tree as well
+            # Maybe you can adopt a layer-by-layer approach to that 
+            raise NotImplementedError("This function is not implemented yet")
+        else:
+            raise NameError(f"Unknown file extension {fileType}")
     
     @staticmethod
     def load(file):
