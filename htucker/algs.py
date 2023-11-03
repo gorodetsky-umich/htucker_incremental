@@ -1093,7 +1093,8 @@ class HTucker:
         
         if fileType == "hto":
             # Save to a hierarcichal tucker object file
-            pckl.dump(directory + fileName)
+            with open(directory + fileName, 'wb') as f:
+                pckl.dump(self, f)
         elif fileType == "npy":
             # TODO
             # Save htucker object to numpy arrays
@@ -1115,7 +1116,8 @@ class HTucker:
         
         if fileType == "hto":
             # File is a hierarcichal tucker object file
-            return pckl.load(directory+file)
+            with open(directory+file, 'rb') as f:
+                return pckl.load(f)
         elif fileType == "npy":
             # TODO
             # Load htucker object using numpy arrays
