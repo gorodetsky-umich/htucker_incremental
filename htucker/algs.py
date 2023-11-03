@@ -1083,6 +1083,14 @@ class HTucker:
             num_entries+=np.prod(lf.shape)
         return np.prod(self.original_shape)*self.batch_count/num_entries
 
+    def save(self, fileName, fileType=".hto"):
+
+        return None
+    
+    @staticmethod
+    def load(file):
+        
+        return None
         
         
 def truncated_svd(a, truncation_threshold=None, full_matrices=True, compute_uv=True, hermitian=False):
