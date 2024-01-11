@@ -5,6 +5,7 @@ import htucker as ht
 import pickle as pckl
 
 from math import ceil
+import os
 from warnings import warn
 
 
@@ -1107,7 +1108,7 @@ class HTucker:
 
         if fileType == "hto":
             # Save to a hierarcichal tucker object file
-            with open(directory + fileName, 'wb') as f:
+            with open(os.path.join(directory, fileName), 'wb') as f:
                 pckl.dump(self, f)
         elif fileType == "npy":
             # TODO
@@ -1136,7 +1137,7 @@ class HTucker:
             NotImplementedError: Raises NotImplementedError when fileType is "npy" as it is currently not supported.
         """
         # File address should be given as directory variable
-        assert len(file.split("/"))==1 , "Please give address as directory variable."
+        assert len(file.split(os.sep))==1 , "Please give address as directory variable."
         if len(file.split("."))==2:
             #File extension is given in the file name
             _ , fileType = file.split(".")
@@ -1145,7 +1146,7 @@ class HTucker:
         
         if fileType == "hto":
             # File is a hierarcichal tucker object file
-            with open(directory+file, 'rb') as f:
+            with open(os.path.join(directory, file), 'rb') as f:
                 return pckl.load(f)
         elif fileType == "npy":
             # TODO
