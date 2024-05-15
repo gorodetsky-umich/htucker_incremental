@@ -412,8 +412,16 @@ class HTucker:
 
         if self.rtol is not None:
             # _num_total_svds=sum([len(items) for items in self._dimension_tree._level_items[1:]])-1
-            self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+            num_svds = 2*(len(tensor.shape)-1)-2
+            tenNorm = np.linalg.norm(tensor)
+            cur_norm = tenNorm
+            total_allowed_error = tenNorm*self.rtol
+            self.allowed_error=tenNorm*self.rtol/np.sqrt(num_svds) # allowed error per svd
+
+            # TODO: here, the allowed error does not take the fact that one of the dimensions is the batch dimension and therefore will be ignored
         
+        # print(num_svds,total_allowed_error,self.allowed_error,cur_norm,tenNorm)
         node_idx = self._dimension_tree._nodeCount-1
 
         hosvd_dimensions = [item._dimension_index[0] for item in self._dimension_tree._level_items[-1] if item._isleaf]
@@ -432,9 +440,30 @@ class HTucker:
                 li.real_node = self.leaves[leaf_idx]
                 li.parent._ranks[li.parent._ranks.index(None)]=li.real_node.rank
             tensor = mode_n_product(tensor=tensor, matrix=leaf, modes=[leaf_idx,0])
-        
+        cur_norm = min(np.linalg.norm(tensor),tenNorm)
+        # print()
+        # print(
+        #     num_svds,
+        #     len(self._dimension_tree._level_items[-1]),
+        #     tenNorm,
+        #     cur_norm,
+        #     total_allowed_error,
+        #     self.allowed_error,
+        #     (cur_norm**2/tenNorm**2),
+        #     np.sqrt(1-(cur_norm**2/tenNorm**2)),
+        #     max(((tenNorm**(2))-(cur_norm**(2))),0),
+        #     )
+        # print()
 
+        num_svds -= len(self._dimension_tree._level_items[-1])
         for layer in self._dimension_tree._level_items[1:-1][::-1]:
+            # print(cur_norm)
+            self.allowed_error =  np.sqrt((total_allowed_error**(2)) - max(((tenNorm**(2))-(cur_norm**(2))),0))
+            # print(self.allowed_error)
+            self.allowed_error = self.allowed_error/np.sqrt(num_svds)
+            # print(self.allowed_error)
+            # print(num_svds,self.allowed_error,cur_norm,tenNorm)
+
             hosvd_dimensions = [item._dimension_index[0] for item in layer if item._isleaf]
             # _ , leafs = hosvd(tensor,tol=self.allowed_error)
             if hosvd_dimensions:
@@ -473,7 +502,7 @@ class HTucker:
                     child_list.append(item.shape[0])
                 new_shape.append(np.prod(child_list))
                 # inter_shape.append(np.prod(child_list))
-            print(batch_dimension-dimension_shift)
+            # print(batch_dimension-dimension_shift)
             
             batch_dimension-=dimension_shift
             new_shape.insert(batch_dimension,batch_count)
@@ -523,6 +552,22 @@ class HTucker:
                     # item.ranks[0] = self.leaves[leaf_idx].shape[-1]
                     # item.real_node = self.leaves[leaf_idx]
                     # item.parent_.ranks[item.parent_ranks.index(None)] = item.real.node.rank
+            # cur_norm=np.linalg.norm(tensor)
+            cur_norm = min(np.linalg.norm(tensor),tenNorm)
+            # print()
+            # print(
+            #     num_svds,
+            #     len(layer),
+            #     tenNorm,
+            #     cur_norm,
+            #     total_allowed_error,
+            #     self.allowed_error,
+            #     (cur_norm**2/tenNorm**2),
+            #     np.sqrt(1-(cur_norm**2/tenNorm**2)),
+            #     max(((tenNorm**(2))-(cur_norm**(2))),0),
+            #     )
+            # print()
+            num_svds -= len(layer)
         layer = self._dimension_tree._level_items[0]
         item = layer[0]
         for chld in item.children:
@@ -883,9 +928,11 @@ class HTucker:
         core = self.project(new_tensor,batch=True,batch_dimension=batch_dimension)
         reconstruction = self.reconstruct(core)
         tenNorm = np.linalg.norm(new_tensor)
-        if (np.linalg.norm(new_tensor-reconstruction)/tenNorm)<=self.rtol:
+        rel_proj_error = (np.linalg.norm(new_tensor-reconstruction)/tenNorm)
+        # print(rel_proj_error,rel_proj_error<=self.rtol)
+        if rel_proj_error<=self.rtol:
             # print('Current tensor network is sufficient, no need to update the cores.')
-            self.batch_count+=new_tensor_shape[batch_dimension]
+            self.batch_count+=new_tensor_shape[batch_dimension]#*(not append)
             if append:
                 self.root.core = np.concatenate((self.root.core,core),axis=-1)
                 self.root.get_ranks()
@@ -895,8 +942,17 @@ class HTucker:
         
 
 
-        allowed_error=tenNorm*self.rtol/np.sqrt(2*len(new_tensor.shape)-3)
+        # allowed_error=tenNorm*self.rtol/np.sqrt(2*len(new_tensor.shape)-3)
+        cur_norm = tenNorm
+        total_allowed_error = tenNorm*self.rtol
+        allowed_error = total_allowed_error
+        num_svds = 2*(len(new_tensor.shape)-1)-2
+        # print(num_svds)
         for layer in self._dimension_tree._level_items[::-1][:-1]:
+            # print(num_svds)
+            # print(allowed_error)
+            allowed_error=allowed_error/np.sqrt(num_svds)
+            # print(allowed_error)
             idxCtr = 0
             for itemIdx, item in enumerate(layer):
                 2+2
@@ -957,11 +1013,14 @@ class HTucker:
                     tempTens = tempTens-new_tensor
                     new_shape = list(new_tensor.shape)
                     new_shape = new_shape[:idxCtr]+[np.prod(new_shape[idxCtr:idxCtr+contractionDims])]+new_shape[idxCtr+contractionDims:]
-                    u,s,_ = np.linalg.svd(ht.mode_n_unfolding(tempTens.reshape(new_shape,order="F"),idxCtr),full_matrices=False)
+                    try:
+                        u,s,_ = np.linalg.svd(ht.mode_n_unfolding(tempTens.reshape(new_shape,order="F"),idxCtr),full_matrices=False)
+                    except np.linalg.LinAlgError:
+                        print("Numpy svd did not converge, using qr+svd")
+                        q,r = np.linalg.qr(ht.mode_n_unfolding(tempTens.reshape(new_shape,order="F"),idxCtr))
+                        u,s,_ = np.linalg.svd(r,full_matrices=False)
+                        u = q@u
                     idxCtr +=2
-
-
-
                 else:
                     ValueError(f"Unknown node type! {type(item)} is not known!")
 
@@ -1044,7 +1103,30 @@ class HTucker:
                     )+
                     ")"
                 )
-        self.batch_count+=new_tensor_shape[batch_dimension]
+            # print(len(layer),layer)
+            num_svds -= len(layer)
+            cur_norm = np.linalg.norm(new_tensor)
+            # print(num_svds,new_tensor.shape)
+            # print(
+            #     tenNorm,
+            #     cur_norm,
+            #     allowed_error,
+            #     (cur_norm**2/tenNorm**2),
+            #     np.sqrt(1-(cur_norm**2/tenNorm**2)),
+            #     allowed_error**2,
+            #     (total_allowed_error**(2)),
+            #     (tenNorm**(2)),
+            #     (cur_norm**(2)),
+            #     ((tenNorm**(2))-(cur_norm**(2))),
+            #     (total_allowed_error**(2)) - ((tenNorm**(2))-(cur_norm**(2))),
+            #     np.sqrt((total_allowed_error**(2)) - max(((tenNorm**(2))-(cur_norm**(2))),0))
+            #     )
+            # print(allowed_error)
+            allowed_error = np.sqrt((total_allowed_error**(2)) - max(((tenNorm**(2))-(cur_norm**(2))),0))
+            # print(allowed_error)
+
+        
+        self.batch_count+=new_tensor_shape[batch_dimension]#*(not append)
         if append:
             self.root.core = np.concatenate((self.root.core,new_tensor),axis=-1)
             self.root.get_ranks()
@@ -1078,7 +1160,7 @@ class HTucker:
 
     @property
     def compression_ratio(self):
-        num_entries=np.prod(self.root.shape)*self.batch_count
+        num_entries=np.prod(self.root.shape[:-1])*self.batch_count
         for tf in self.transfer_nodes:
             num_entries+=np.prod(tf.shape)
         for lf in self.leaves:
@@ -1542,3 +1624,8 @@ def createDimensionTree(inp, numSplits, minSplitSize):
         
 
         
+def convert_to_base2(num):
+    binary = bin(num)[2:]  # convert to binary string
+    binary = binary.zfill(3)  # pad with leading zeros to ensure 3 digits
+    binary_list = [int(bit) for bit in binary]
+    return binary_list
