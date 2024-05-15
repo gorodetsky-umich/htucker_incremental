@@ -71,6 +71,12 @@ def main():
             "filter": filter,
             "seed_idx": args.seed_idx,
         }
+        wandb.init(
+            # entity="dorukaks",
+            project="HierarchicalTucker_experiments",
+            name="BigEarthNet_eps_"+"".join(f"{args.epsilon:0.2f}_".split("."))+f"batchsize_{args.batch_size:04d}_"+"shape_"+"_".join(map(str,args.reshaping))+"_date_"+timestamp,
+            config=run_config,
+        )
 
 
     if args.seed_idx is None:
