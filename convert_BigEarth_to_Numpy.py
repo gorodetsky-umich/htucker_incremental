@@ -63,6 +63,8 @@ def main():
     print("Maximum image size: ", image_size)
     for image_folder in tqdm(image_folders):
         image_name = os.path.split(image_folder)[-1]
+        if os.path.exists(directories["save"]+image_name+'.npy'):
+            continue
         # print("Reading image: ", image_name)
         with Pool() as pool:
             image = pool.map(partial(read_image, image_path=image_folder, resizing=image_size, interpolation_method=cv2.INTER_AREA), BAND_NAMES)
