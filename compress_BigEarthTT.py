@@ -41,7 +41,7 @@ def get_args():
     parser.add_argument('-w', '--wandb', dest='wandb', action='store_true', help='Use wandb for logging', default=False)
     return parser.parse_args()
 
-def main():
+def compress_BasaltMineRL_HT():
     args = get_args()
     filter = [True, True, True, True, True, True, True, True, True, True, True, True]
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -139,7 +139,7 @@ def main():
         dataset = dmt.ttObject(
             train_batch,
             epsilon=args.epsilon,
-            keepData=True,
+            keepData=False,
             samplesAlongLastDimension=True,
             method="ttsvd",
         )
@@ -305,4 +305,4 @@ def main():
         wandb.finish()
 
 if __name__ == '__main__':
-    main()
+    compress_BasaltMineRL_HT()
