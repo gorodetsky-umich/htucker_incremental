@@ -31,8 +31,12 @@ ORD = "F"
 BAND_NAMES= ['B01', 'B02', 'B03', 'B04', 'B05',
                 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
 HEUR_2_USE = ['skip', 'occupancy']
+<<<<<<< HEAD
 MACHINE_ALIAS = "LH"
 
+=======
+OCCUPANCY = 1
+>>>>>>> 2a2961d8470e93045082d33e8ad5fbffbcbebf56
 
 def get_args():
     parser = argparse.ArgumentParser(description='This script reads the BigEarthNet image patches')
@@ -45,7 +49,7 @@ def get_args():
     parser.add_argument('-w', '--wandb', dest='wandb', action='store_true', help='Use wandb for logging', default=False)
     return parser.parse_args()
 
-def main():
+def compress_BasaltMineRL_HT():
     args = get_args()
     filter = [True, True, True, True, True, True, True, True, True, True, True, True]
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -228,6 +232,7 @@ def main():
                 train_batch,
                 heuristicsToUse=HEUR_2_USE,
                 epsilon=args.epsilon,
+                occupancyThreshold=OCCUPANCY,
             )
             batch_time = time.time()-tic
             update_flag = (dataset.ttRanks != previous_ranks)
@@ -309,4 +314,4 @@ def main():
         wandb.finish()
 
 if __name__ == '__main__':
-    main()
+    compress_BasaltMineRL_HT()
