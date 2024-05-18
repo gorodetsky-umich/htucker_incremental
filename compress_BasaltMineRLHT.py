@@ -28,7 +28,7 @@ __all__ = [
     "initialize_wandb",
 ]
 
-def initialize_wandb(args,timestamp,tags):
+def initialize_wandb(args,timestamp,tags,method):
     run_config = wandb.config = {
         "epsilon": args.epsilon,
         "batch_size": args.batch_size,
@@ -38,7 +38,7 @@ def initialize_wandb(args,timestamp,tags):
     }
     wandb.init(
         project="HierarchicalTucker_experiments",
-        name="BasaltMineRL_HT_eps_"+"".join(f"{args.epsilon:0.2f}_".split("."))+f"batchsize_{args.batch_size:04d}_framesize_"+"_".join(map(str,args.resize))+"_"+"shape_"+"_".join(map(str,args.reshaping))+"_date_"+timestamp,
+        name=f"BasaltMineRL_{method}_eps_"+"".join(f"{args.epsilon:0.2f}_".split("."))+f"batchsize_{args.batch_size:04d}_framesize_"+"_".join(map(str,args.resize))+"_"+"shape_"+"_".join(map(str,args.reshaping))+"_date_"+timestamp,
         config=run_config,
         tags=tags,
     )
@@ -64,7 +64,7 @@ def main(args):
     tags = ['BasaltMineRL', 'HTucker', 'MBP23']
 
     if args.wandb:
-        initialize_wandb(args,timestamp,tags)
+        initialize_wandb(args,timestamp,tags,method="HT")
     
     random.seed(args.seed_idx)  # Fix the seed to a random number
     np.random.seed(args.seed_idx)  # Fix the seed to a random number
