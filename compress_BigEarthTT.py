@@ -1,5 +1,6 @@
 #!.env/bin/python
 import os
+import sys
 import cv2
 import glob
 import time
@@ -10,6 +11,7 @@ import datetime
 import rasterio
 
 import numpy as np
+sys.path.insert(0,"/home/doruk/TT-ICE/")
 import DaMAT as dmt
 import numpy.linalg as nla
 
@@ -29,6 +31,8 @@ ORD = "F"
 BAND_NAMES= ['B01', 'B02', 'B03', 'B04', 'B05',
                 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
 HEUR_2_USE = ['skip', 'occupancy']
+MACHINE_ALIAS = "LH"
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='This script reads the BigEarthNet image patches')
@@ -66,7 +70,7 @@ def main():
             project="HierarchicalTucker_experiments",
             name="BigEarthNet_TT_eps_"+"".join(f"{args.epsilon:0.2f}_".split("."))+f"batchsize_{args.batch_size:04d}_"+"shape_"+"_".join(map(str,args.reshaping))+"_date_"+timestamp,
             config=run_config,
-            tags=["BigEarthNet", "TT-ICE", "MBP23"],
+            tags=["BigEarthNet", "TT-ICE", MACHINE_ALIAS],
         )
     print("Seed index is: ", seed_idx)
     random.seed(seed_idx)  # Fix the seed to a random number
@@ -139,7 +143,7 @@ def main():
         dataset = dmt.ttObject(
             train_batch,
             epsilon=args.epsilon,
-            keepData=True,
+            keepData=False,
             samplesAlongLastDimension=True,
             method="ttsvd",
         )
