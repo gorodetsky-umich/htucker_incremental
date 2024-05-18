@@ -29,6 +29,7 @@ ORD = "F"
 BAND_NAMES= ['B01', 'B02', 'B03', 'B04', 'B05',
                 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
 HEUR_2_USE = ['skip', 'occupancy']
+OCCUPANCY = 1
 
 def get_args():
     parser = argparse.ArgumentParser(description='This script reads the BigEarthNet image patches')
@@ -224,6 +225,7 @@ def compress_BasaltMineRL_HT():
                 train_batch,
                 heuristicsToUse=HEUR_2_USE,
                 epsilon=args.epsilon,
+                occupancyThreshold=OCCUPANCY,
             )
             batch_time = time.time()-tic
             update_flag = (dataset.ttRanks != previous_ranks)

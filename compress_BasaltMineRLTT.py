@@ -24,6 +24,7 @@ TEST_RATIO = 0.2
 ORD = "F"
 DEFAULT_RESIZE = [128, 128]
 HEUR_2_USE = ['skip', 'occupancy']
+OCCUPANCY = 1
 
 def compress_BasaltMineRL_TT(args):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -170,6 +171,7 @@ def compress_BasaltMineRL_TT(args):
             train_batch,
             heuristicsToUse=HEUR_2_USE,
             epsilon=args.epsilon,
+            occupancyThreshold=OCCUPANCY,
         )
         batch_time = time.time()-tic
         update_flag = (dataset.ttRanks != previous_ranks)
@@ -270,6 +272,7 @@ def compress_BasaltMineRL_TT(args):
                 train_batch,
                 heuristicsToUse=HEUR_2_USE,
                 epsilon=args.epsilon,
+                occupancyThreshold=OCCUPANCY,
             )
             batch_time = time.time()-tic
             total_time += batch_time
