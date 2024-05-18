@@ -77,10 +77,11 @@ def compress_BasaltMineRL_TT(args):
     previous_ranks = dataset.ttRanks.copy()
     batch_index = 0
     rec = dataset.reconstruct(
-        dataset.ttCores[-1][:,-args.batch_size:,:]
-    ).squeeze(0).squeeze(-1)
+        dataset.ttCores[-1][:,-args.batch_size:,0]
+    ).squeeze(0)
+    frame_counter += args.batch_size
+    total_frame_counter += args.batch_size
     error_after_update = nla.norm(rec-train_batch)/batch_norm
-    
     val_errors = []
     test_errors = []
 
