@@ -31,12 +31,8 @@ ORD = "F"
 BAND_NAMES= ['B01', 'B02', 'B03', 'B04', 'B05',
                 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
 HEUR_2_USE = ['skip', 'occupancy']
-<<<<<<< HEAD
 MACHINE_ALIAS = "LH"
-
-=======
 OCCUPANCY = 1
->>>>>>> 2a2961d8470e93045082d33e8ad5fbffbcbebf56
 
 def get_args():
     parser = argparse.ArgumentParser(description='This script reads the BigEarthNet image patches')
