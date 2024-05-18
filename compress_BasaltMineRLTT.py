@@ -30,7 +30,7 @@ def compress_BasaltMineRL_TT(args):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
     tags = ['BasaltMineRL', 'TT-ICE', 'MBP23']
     if args.wandb:
-        initialize_wandb(args,timestamp=timestamp,tags=tags)
+        initialize_wandb(args,timestamp=timestamp,tags=tags,method='TT')
 
     random.seed(args.seed_idx)  # Fix the seed to a random number
     np.random.seed(args.seed_idx)  # Fix the seed to a random number
@@ -168,7 +168,7 @@ def compress_BasaltMineRL_TT(args):
             ).squeeze(0)
         error_before_update = nla.norm(projection-train_batch)/batch_norm
         tic = time.time()
-        update_flag = dataset.ttICEstar(
+        dataset.ttICEstar(
             train_batch,
             heuristicsToUse=HEUR_2_USE,
             epsilon=args.epsilon,
