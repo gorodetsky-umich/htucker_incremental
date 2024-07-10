@@ -926,12 +926,10 @@ class HTucker:
                 # warn(f"Presented tensor has shape {new_tensor.shape}, which is not compatible with {tuple(self.original_shape)}!")
         
         core = self.project(new_tensor,batch=True,batch_dimension=batch_dimension)
-        reconstruction = self.reconstruct(core)
+
         tenNorm = np.linalg.norm(new_tensor)
-        rel_proj_error = (np.linalg.norm(new_tensor-reconstruction)/tenNorm)
-        # print(rel_proj_error,rel_proj_error<=self.rtol)
-        if rel_proj_error<=self.rtol:
-            # print('Current tensor network is sufficient, no need to update the cores.')
+        # print(tenNorm, np.linalg.norm(core), tenNorm*(1-self.rtol), tenNorm*np.sqrt(1-self.rtol**2))
+        if np.linalg.norm(core)>= tenNorm*np.sqrt(1-self.rtol**2):
             self.batch_count+=new_tensor_shape[batch_dimension]#*(not append)
             if append:
                 self.root.core = np.concatenate((self.root.core,core),axis=-1)
@@ -939,6 +937,18 @@ class HTucker:
                 return False
             else:
                 return False
+        # reconstruction = self.reconstruct(core)
+        # rel_proj_error = (np.linalg.norm(new_tensor-reconstruction)/tenNorm)
+        # # print(rel_proj_error,rel_proj_error<=self.rtol)
+        # if rel_proj_error<=self.rtol:
+        #     # print('Current tensor network is sufficient, no need to update the cores.')
+        #     self.batch_count+=new_tensor_shape[batch_dimension]#*(not append)
+        #     if append:
+        #         self.root.core = np.concatenate((self.root.core,core),axis=-1)
+        #         self.root.get_ranks()
+        #         return False
+        #     else:
+        #         return False
         
 
 
@@ -1241,10 +1251,18 @@ class HTucker:
         
 def truncated_svd(a, truncation_threshold=None, full_matrices=True, compute_uv=True, hermitian=False):
     # print(a.shape)
-    [u, s, v] = np.linalg.svd(a,
-                              full_matrices=full_matrices,
-                              compute_uv=compute_uv,
-                              hermitian=False)
+    try:
+        [u, s, v] = np.linalg.svd(a,
+                                full_matrices=full_matrices,
+                                compute_uv=compute_uv,
+                                hermitian=False)
+    except:
+        q, r = np.linalg.qr(a)
+        [u,s,v] = np.linalg.svd(r,
+                                full_matrices=full_matrices,
+                                compute_uv=compute_uv,
+                                hermitian=False)
+        u = q @ u
     if truncation_threshold == None:
         return [u, s, v]
 
