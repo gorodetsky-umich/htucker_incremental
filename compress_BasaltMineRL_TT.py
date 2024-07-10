@@ -1,4 +1,4 @@
-#!.env/bin/python
+#!.env/bin/python -u
 import os
 import sys 
 import cv2 
@@ -10,17 +10,18 @@ import datetime
 import argparse
 
 import numpy as np
+sys.path.insert(0,"/home/doruk/TT-ICE/")
 import DaMAT as dmt
 import numpy.linalg as nla
-from compress_BasaltMineRLHT import get_args,initialize_wandb
+from compress_BasaltMineRL_HT import get_args,initialize_wandb
 
 MAX_SEED = 2**32 - 1
 CWD = os.getcwd()
 PATH_SEP = os.path.sep
 HOME = os.path.expanduser("~")
-TRAIN_RATIO = 0.7
-VAL_RATIO = 0.1
-TEST_RATIO = 0.2
+TRAIN_RATIO = 0.997
+VAL_RATIO = 0.002
+TEST_RATIO = 0.002
 ORD = "F"
 DEFAULT_RESIZE = [128, 128]
 HEUR_2_USE = ['skip', 'occupancy']
@@ -28,7 +29,7 @@ OCCUPANCY = 1
 
 def compress_BasaltMineRL_TT(args):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    tags = ['BasaltMineRL', 'TT-ICE', 'MBP23']
+    tags = ['BasaltMineRL', 'TT-ICE', 'LH', f'{args.resize[0]}x{args.resize[1]}']
     if args.wandb:
         initialize_wandb(args,timestamp=timestamp,tags=tags,method='TT')
 
@@ -95,7 +96,10 @@ def compress_BasaltMineRL_TT(args):
                 break
             frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
             frames.append(frame)
-        val_batch = np.concatenate(frames,axis=-1)
+        try:
+            val_batch = np.concatenate(frames,axis=-1)
+        except ValueError:
+            continue
         val_batch = val_batch.reshape(resize_reshape, order=ORD)
         rec = dataset.reconstruct(
             dataset.projectTensor(val_batch,),
@@ -118,7 +122,10 @@ def compress_BasaltMineRL_TT(args):
                 break
             frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
             frames.append(frame)
-        test_batch = np.concatenate(frames,axis=-1)
+        try:
+            test_batch = np.concatenate(frames,axis=-1)
+        except ValueError:
+            continue
         test_batch = test_batch.reshape(resize_reshape, order=ORD)
         rec = dataset.reconstruct(
             dataset.projectTensor(test_batch,),
@@ -193,7 +200,10 @@ def compress_BasaltMineRL_TT(args):
                         break
                     frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                     frames.append(frame)
-                val_batch = np.concatenate(frames,axis=-1)
+                try:
+                    val_batch = np.concatenate(frames,axis=-1)
+                except ValueError:
+                    continue
                 val_batch = val_batch.reshape(resize_reshape, order=ORD)
                 rec = dataset.reconstruct(
                     dataset.projectTensor(val_batch,),
@@ -216,7 +226,10 @@ def compress_BasaltMineRL_TT(args):
                         break
                     frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                     frames.append(frame)
-                test_batch = np.concatenate(frames,axis=-1)
+                try:
+                    test_batch = np.concatenate(frames,axis=-1)
+                except ValueError:
+                    continue
                 test_batch = test_batch.reshape(resize_reshape, order=ORD)
                 rec = dataset.reconstruct(
                     dataset.projectTensor(test_batch,),
@@ -261,7 +274,10 @@ def compress_BasaltMineRL_TT(args):
                     break
                 frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                 frames.append(frame)
-            train_batch = np.concatenate(frames,axis=-1)
+            try:
+                train_batch = np.concatenate(frames,axis=-1)
+            except ValueError:
+                break
             train_batch = train_batch.reshape(resize_reshape, order=ORD)
             batch_norm = nla.norm(train_batch)
             projection = dataset.reconstruct(
@@ -294,7 +310,10 @@ def compress_BasaltMineRL_TT(args):
                             break
                         frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                         frames.append(frame)
-                    val_batch = np.concatenate(frames,axis=-1)
+                    try:
+                        val_batch = np.concatenate(frames,axis=-1)
+                    except ValueError:
+                        continue
                     val_batch = val_batch.reshape(resize_reshape, order=ORD)
                     rec = dataset.reconstruct(
                         dataset.projectTensor(val_batch,),
@@ -317,7 +336,10 @@ def compress_BasaltMineRL_TT(args):
                             break
                         frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                         frames.append(frame)
-                    test_batch = np.concatenate(frames,axis=-1)
+                    try:
+                        test_batch = np.concatenate(frames,axis=-1)
+                    except ValueError:
+                        continue
                     test_batch = test_batch.reshape(resize_reshape, order=ORD)
                     rec = dataset.reconstruct(
                         dataset.projectTensor(test_batch,),

@@ -1,4 +1,4 @@
-#!.env/bin/python
+#!.env/bin/python -u
 import os
 import sys 
 import cv2 
@@ -17,9 +17,9 @@ MAX_SEED = 2**32 - 1
 CWD = os.getcwd()
 PATH_SEP = os.path.sep
 HOME = os.path.expanduser("~")
-TRAIN_RATIO = 0.7
-VAL_RATIO = 0.1
-TEST_RATIO = 0.2
+TRAIN_RATIO = 0.997
+VAL_RATIO = 0.002
+TEST_RATIO = 0.002
 ORD = "F"
 DEFAULT_RESIZE = [128, 128]
 
@@ -61,7 +61,7 @@ def get_args():
 
 def main(args):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    tags = ['BasaltMineRL', 'HTucker', 'MBP23']
+    tags = ['BasaltMineRL', 'HTucker', 'LH', f'{args.resize[0]}x{args.resize[1]}']
 
     if args.wandb:
         initialize_wandb(args,timestamp,tags,method="HT")
@@ -88,6 +88,9 @@ def main(args):
         if not success_train:
             break
         frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
+        # print(frame.shape)
+        # cv2.imwrite("/home/doruk/htucker_incremental/deneme.jpg",frame[...,0])
+        # return
         frames.append(frame)
     train_batch = np.concatenate(frames,axis=-1)
     print(train_batch.shape)
@@ -138,7 +141,10 @@ def main(args):
                 break
             frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
             frames.append(frame)
-        val_batch = np.concatenate(frames,axis=-1)
+        try:
+            val_batch = np.concatenate(frames,axis=-1)
+        except ValueError:
+            continue
         val_batch = val_batch.reshape(resize_reshape, order=ORD)
         rec = dataset.reconstruct(
             dataset.project(val_batch,batch=True,batch_dimension=batch_along),
@@ -162,7 +168,10 @@ def main(args):
                 break
             frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
             frames.append(frame)
-        test_batch = np.concatenate(frames,axis=-1)
+        try:
+            test_batch = np.concatenate(frames,axis=-1)
+        except ValueError:
+            continue
         test_batch = test_batch.reshape(resize_reshape, order=ORD)
         rec = dataset.reconstruct(
             dataset.project(test_batch,batch=True,batch_dimension=batch_along),
@@ -243,7 +252,10 @@ def main(args):
                         break
                     frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                     frames.append(frame)
-                val_batch = np.concatenate(frames,axis=-1)
+                try:
+                    val_batch = np.concatenate(frames,axis=-1)
+                except ValueError:
+                    continue
                 val_batch = val_batch.reshape(resize_reshape, order=ORD)
                 rec = dataset.reconstruct(
                     dataset.project(val_batch,batch=True,batch_dimension=batch_along),
@@ -267,7 +279,10 @@ def main(args):
                         break
                     frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                     frames.append(frame)
-                test_batch = np.concatenate(frames,axis=-1)
+                try:
+                    test_batch = np.concatenate(frames,axis=-1)
+                except ValueError:
+                    continue
                 test_batch = test_batch.reshape(resize_reshape, order=ORD)
                 rec = dataset.reconstruct(
                     dataset.project(test_batch,batch=True,batch_dimension=batch_along),
@@ -320,7 +335,10 @@ def main(args):
                     break
                 frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                 frames.append(frame)
-            train_batch = np.concatenate(frames,axis=-1)
+            try:
+                train_batch = np.concatenate(frames,axis=-1)
+            except ValueError:
+                break
             train_batch = train_batch.reshape(resize_reshape, order=ORD)
             batch_norm = nla.norm(train_batch)
             projection = dataset.reconstruct(
@@ -353,7 +371,10 @@ def main(args):
                             break
                         frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                         frames.append(frame)
-                    val_batch = np.concatenate(frames,axis=-1)
+                    try:
+                        val_batch = np.concatenate(frames,axis=-1)
+                    except ValueError:
+                        continue
                     val_batch = val_batch.reshape(resize_reshape, order=ORD)
                     rec = dataset.reconstruct(
                         dataset.project(val_batch,batch=True,batch_dimension=batch_along),
@@ -377,7 +398,10 @@ def main(args):
                             break
                         frame = cv2.resize(frame, args.resize, interpolation=cv2.INTER_LINEAR)[...,None]
                         frames.append(frame)
-                    test_batch = np.concatenate(frames,axis=-1)
+                    try:
+                        test_batch = np.concatenate(frames,axis=-1)
+                    except ValueError:
+                        continue
                     test_batch = test_batch.reshape(resize_reshape, order=ORD)
                     rec = dataset.reconstruct(
                         dataset.project(test_batch,batch=True,batch_dimension=batch_along),
