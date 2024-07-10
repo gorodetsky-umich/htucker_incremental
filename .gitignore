@@ -13,3 +13,4 @@ frames/
 *.hto
 *.txt
 wandb/
+*.slurm
