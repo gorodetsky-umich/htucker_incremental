@@ -13,4 +13,8 @@ frames/
 *.hto
 *.txt
 wandb/
+<<<<<<< HEAD
 *.slurm
+=======
+S2A_MSIL2A*
+>>>>>>> refs/remotes/origin/master
