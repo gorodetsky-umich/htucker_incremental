@@ -77,8 +77,8 @@ def main():
     #     print(file, anan.shape)
 if __name__ == "__main__":
     main()
-    len(glob.glob(HOME+"/data/BigEarthNet-v1.0_numpy/*.npy"))
-    len(os.listdir(HOME+"/dataBigEarthNet-v1.0"))
+    # len(glob.glob(HOME+"/data/BigEarthNet-v1.0_numpy/*.npy"))
+    # len(os.listdir(HOME+"/dataBigEarthNet-v1.0"))
     # for file in glob.glob(HOME+"/data/BigEarthNet-v1.0_numpy/*.npy"):
     #     anan = np.load(file)
     #     print(file, anan.shape)

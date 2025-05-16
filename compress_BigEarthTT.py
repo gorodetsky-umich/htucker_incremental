@@ -1,4 +1,4 @@
-#!.env/bin/python
+#!.env/bin/python -u
 import os
 import sys
 import cv2
@@ -24,20 +24,20 @@ MAX_SEED = 2**32 - 1
 CWD = os.getcwd()
 PATH_SEP = os.path.sep
 HOME = os.path.expanduser("~")
-TRAIN_RATIO = 0.7
-VAL_RATIO = 0.1
-TEST_RATIO = 0.2
+TRAIN_RATIO = 0.96
+VAL_RATIO = 0.02
+TEST_RATIO = 0.02
 ORD = "F"
 BAND_NAMES= ['B01', 'B02', 'B03', 'B04', 'B05',
                 'B06', 'B07', 'B08', 'B8A', 'B09', 'B11', 'B12']
-HEUR_2_USE = ['skip', 'occupancy']
+HEUR_2_USE = ['skip','occupancy']
 MACHINE_ALIAS = "LH"
 OCCUPANCY = 1
 
 def get_args():
     parser = argparse.ArgumentParser(description='This script reads the BigEarthNet image patches')
     parser.add_argument('-d', '--data_location', dest='data_location', help='path to data', default=None)
-    parser.add_argument('-e', '--epsilon', dest='epsilon', help='epsilon value', default=0.1)
+    parser.add_argument('-e', '--epsilon', dest='epsilon', type=float, help='epsilon value', default=0.1)
     parser.add_argument('-s', '--seed', dest='seed_idx', type=int , help='Variable to pass seed index', default=None)
     parser.add_argument('-r', '--reshaping', dest='reshaping', nargs='+', type=int, help='Determines the reshaping for the tensor stream', default=[])
     parser.add_argument('-b', '--batch_size', dest='batch_size', type=int, help='Batch size', default=1)
@@ -45,7 +45,7 @@ def get_args():
     parser.add_argument('-w', '--wandb', dest='wandb', action='store_true', help='Use wandb for logging', default=False)
     return parser.parse_args()
 
-def compress_BasaltMineRL_HT():
+def compress_BasaltMineRL_TT():
     args = get_args()
     filter = [True, True, True, True, True, True, True, True, True, True, True, True]
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S")
@@ -229,6 +229,7 @@ def compress_BasaltMineRL_HT():
                 heuristicsToUse=HEUR_2_USE,
                 epsilon=args.epsilon,
                 occupancyThreshold=OCCUPANCY,
+                surrogateThreshold = False,
             )
             batch_time = time.time()-tic
             update_flag = (dataset.ttRanks != previous_ranks)
@@ -310,4 +311,4 @@ def compress_BasaltMineRL_HT():
         wandb.finish()
 
 if __name__ == '__main__':
-    compress_BasaltMineRL_HT()
+    compress_BasaltMineRL_TT()
