@@ -258,11 +258,18 @@ class HTucker:
         if self.rtol is not None:
             _num_total_svds=sum([len(items) for items in self._dimension_tree._level_items[1:]])-1
             # self.allowed_error=np.linalg.norm(tensor)*self.rtol/_num_total_svds # allowed error per svd step
-            print(np.sqrt(2*len(tensor.shape)-3),len(tensor.shape),_num_total_svds)
-            print(np.linalg.norm(tensor),self.rtol,np.sqrt(2*len(tensor.shape)-3))
+            # print(np.sqrt(2*len(tensor.shape)-3),len(tensor.shape),_num_total_svds)
+            # print(np.linalg.norm(tensor),self.rtol,np.sqrt(2*len(tensor.shape)-3))
             # self.allowed_error=np.linalg.norm(tensor)*self.rtol*np.sqrt(2*len(tensor.shape)-3)#/_num_total_svds # allowed error per svd step
 
-            self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+            # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) # allowed error per svd
+
+            num_svds = 2*len(tensor.shape)-3
+            tenNorm = np.linalg.norm(tensor)
+            cur_norm = tenNorm
+            total_allowed_error = tenNorm*self.rtol
+            self.allowed_error=tenNorm*self.rtol/np.sqrt(num_svds) # allowed error per svd
+
             # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(2*len(tensor.shape)-3) *(_num_total_svds/len(tensor.shape))# allowed error per svd
             
             # self.allowed_error=np.linalg.norm(tensor)*self.rtol/np.sqrt(_num_total_svds)#/_num_total_svds # allowed error per svd step
@@ -274,8 +281,8 @@ class HTucker:
         existing_leaves=[]
         existing_nodes=[]
         node_idx = self._dimension_tree._nodeCount-1
-        print(self.allowed_error)
-        print(len(self._dimension_tree._level_items[-1]))
+        # print(self.allowed_error)
+        # print(len(self._dimension_tree._level_items[-1]))
         # _ , leafs = hosvd(tensor,tol=self.allowed_error*len(self._dimension_tree._level_items[-1]))
         _ , leafs = hosvd(tensor,tol=self.allowed_error)
         # _ , leafs = hosvd(tensor,tol=self.allowed_error,dimensions=len(self._dimension_tree._level_items[-1]))
@@ -293,13 +300,19 @@ class HTucker:
                 existing_leaves.append(lf)
                 tensor = mode_n_product(tensor,lf.core,[lf.leaf_idx,0])
 
+        cur_norm = min(np.linalg.norm(tensor),tenNorm)
 
         ## Niye last layer'i kaydettigini hatirla
         ## Sanirim mevcut layerin bir onceki layerla baglantisini yapmak icin var burada last layer
     
         last_layer=self._dimension_tree._level_items[-1]
         
+        num_svds -= len(self._dimension_tree._level_items[-1])
         for layer in self._dimension_tree._level_items[1:-1][::-1]:
+
+            self.allowed_error =  np.sqrt((total_allowed_error**(2)) - max(((tenNorm**(2))-(cur_norm**(2))),0))
+            self.allowed_error = self.allowed_error/np.sqrt(num_svds)
+
             new_shape=[]
             # burada ilk pass hangi dimensionun hangi dimensionla birlesecegini anlamak icin var
             deneme=[]
@@ -315,7 +328,7 @@ class HTucker:
             # dimension contractionun nasil olacagini planladiktan sonra reshape et ve HOSVD hesapla
             # if len(new_shape)>1:
             tensor=tensor.reshape(new_shape,order="F")
-            print(len(new_shape),new_shape)
+            # print(len(new_shape),new_shape)
             # print(len(layer),tensor.shape, deneme, len(deneme),new_shape,len(new_shape),item._dimension_index)
             # if len(new_shape)==2:
             #     _ , leafs = hosvd(tensor,tol=self.allowed_error)
@@ -373,6 +386,8 @@ class HTucker:
                     # learn the children and connect it to the current node. 
                     pass
 
+            cur_norm = min(np.linalg.norm(tensor),tenNorm)
+            num_svds -= len(layer)
             last_layer=layer
         layer = self._dimension_tree._level_items[0]
         item = layer[0]
@@ -592,7 +607,7 @@ class HTucker:
 
     
 
-    def reconstruct(self):
+    def reconstruct_all(self):
         # The strategy is to start from the last core and work the way up to the root.
         assert(self._iscompressed)
         _transfer_nodes=self.transfer_nodes.copy()
@@ -674,14 +689,24 @@ class HTucker:
                     ")"
                 )
             except ValueError:
+                # print("project value error")
                 for ii, string in enumerate(strings):
                     tempstr = [*string]
                     for jj, chrs in enumerate(tempstr):
                             if ord(chrs)>ord("z"):
                                     strings[ii]=strings[ii].replace(chrs,chr(ord(chrs)-ord("z")+ord("A")-1),jj)
                 for jj, chrs in enumerate(coreString):
-                    if ord(chrs)>ord("z"):
-                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                    # print(jj,chrs)
+                    temp_chrs = [*chrs]
+                    for kk,ch in enumerate(temp_chrs):
+                        # print(jj, kk, ch)
+                        if ord(ch)>ord("z"):
+                            temp_chrs[kk]=chr(ord(ch)-ord("z")+ord("A")-1)
+                    # print(coreString[jj],temp_chrs)
+                    coreString[jj]="".join(temp_chrs)
+                    # if ord(chrs)>ord("z"):
+                    #         coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                # print(coreString)
                 new_tensor = eval(
                     "np.einsum("+
                     "'"+
@@ -706,6 +731,7 @@ class HTucker:
             last_char=97
             dims = len(core.shape)
             coreString =[chr(idx) for idx in range(last_char,last_char+dims)]
+            # print(coreString)
             strings.append(''.join(coreString))
             last_char+=dims
             for itemIdx, item in enumerate(layer):
@@ -744,15 +770,27 @@ class HTucker:
                     ")"
                 )
             except ValueError:
+                # print("reconstruct value error")
+                # print(strings)
                 for ii, string in enumerate(strings):
                     tempstr = [*string]
+                    # print(tempstr)
                     for jj, chrs in enumerate(tempstr):
                             if ord(chrs)>ord("z"):
                                     tempstr[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
                                     strings[ii]="".join(tempstr)
+                # print(coreString)
                 for jj, chrs in enumerate(coreString):
-                    if ord(chrs)>ord("z"):
-                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                    # print(jj,chrs)
+                    temp_chrs = [*chrs]
+                    for kk,ch in enumerate(temp_chrs):
+                        # print(jj, kk, ch)
+                        if ord(ch)>ord("z"):
+                            temp_chrs[kk]=chr(ord(ch)-ord("z")+ord("A")-1)
+                    # print(coreString[jj],temp_chrs)
+                    coreString[jj]="".join(temp_chrs)
+                    # if ord(chrs)>ord("z"):
+                    #         coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
                 core = eval(
                     "np.einsum("+
                     "'"+
@@ -1101,8 +1139,13 @@ class HTucker:
                             if ord(chrs)>ord("z"):
                                     strings[ii]=strings[ii].replace(chrs,chr(ord(chrs)-ord("z")+ord("A")-1),jj)
                 for jj, chrs in enumerate(coreString):
-                    if ord(chrs)>ord("z"):
-                            coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
+                    temp_chrs = [*chrs]
+                    for kk,ch in enumerate(temp_chrs):
+                        if ord(ch)>ord("z"):
+                            temp_chrs[kk]=chr(ord(ch)-ord("z")+ord("A")-1)
+                    coreString[jj]="".join(temp_chrs)
+                    # if ord(chrs)>ord("z"):
+                    #         coreString[jj]=chr(ord(chrs)-ord("z")+ord("A")-1)
                 new_tensor = eval(
                     "np.einsum("+
                     "'"+
