@@ -18,8 +18,8 @@ authors = {
     "Gorodetsky": ("Alex Gorodetsky", "goroda@umich.edu"),
 }
 
-maintainer = "Alex Gorodetsky"
-maintainer_email = "goroda@umich.edu"
+maintainer = "Doruk Aksoy"
+maintainer_email = "doruk@umich.edu"
 url = None
 project_urls = None
 platforms = ["Linux", "Mac OSX"]
@@ -58,14 +58,11 @@ with open("htucker/__init__.py") as fid:
 
 packages = [
     "htucker",
-    # "networkx.algorithms",
-    # "networkx.algorithms.assortativity", 
 ]
 
 # add the tests subpackage(s)
 package_data = {
     "htucker": ["tests/*.py"],
-    # "networkx.algorithms": ["tests/*.py"], 
 }
 
 
@@ -115,8 +112,8 @@ if __name__ == "__main__":
         version=version,
         maintainer=maintainer,
         maintainer_email=maintainer_email,
-        author=authors["Gorodetsky"][0],
-        author_email=authors["Gorodetsky"][1],
+        author=authors["Aksoy"][0],
+        author_email=authors["Aksoy"][1],
         description=description,
         keywords=keywords,
         long_description=long_description,
