@@ -1,23 +1,22 @@
-"""
-Htucker
-========
-Htucker is a package for hierarchical tucker decomposition
+"""Htucker.
+
+Htucker is a package for hierarchical tucker decomposition.
 """
 
 __version__ = "0.1.0"
 
 # Import core classes
 from htucker.core import TuckerCore, TuckerLeaf
+from htucker.decomposition import hosvd, hosvd_only_for_dimensions, truncated_svd
 from htucker.ht import HTucker
 from htucker.tree import Node, Tree, createDimensionTree
-from htucker.decomposition import hosvd, truncated_svd, hosvd_only_for_dimensions
 from htucker.utils import (
-    NotFoundError, 
-    create_permutations, 
-    split_dimensions, 
-    mode_n_unfolding,
+    NotFoundError,
+    convert_to_base2,
+    create_permutations,
     mode_n_product,
-    convert_to_base2
+    mode_n_unfolding,
+    split_dimensions,
 )
 
 __all__ = [
@@ -35,6 +34,5 @@ __all__ = [
     "Tree",
     "Node",
     "NotFoundError",
-    "convert_to_base2"
+    "convert_to_base2",
 ]
-
