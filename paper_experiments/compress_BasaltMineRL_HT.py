@@ -238,15 +238,7 @@ def main(args):
     if args.wandb:
         wandb.log(logging_dict)
     print(
-        f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d}\
-            {frame_counter:4d} {round(batch_time, 5):08.5f} \
-                {round(total_time, 5):09.5f} {batch_norm:14.5f} \
-                    {round(error_before_update, 5):0.5f} \
-                        {round(error_after_update, 5):0.5f} \
-                            {round(dataset.compression_ratio, 5):09.5f} \
-                                {round(np.mean(val_errors),5):0.5f} \
-                                    {round(np.mean(test_errors),5):0.5f} \
-                                        {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+        f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d} {frame_counter:4d} {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compression_ratio, 5):09.5f} {round(np.mean(val_errors),5):0.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
     )
     batch_index += 1
     # print("Finished first step, entering incremental part")
@@ -365,15 +357,7 @@ def main(args):
             wandb.log(logging_dict)
 
         print(
-            f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d} \
-                {frame_counter:4d} {round(batch_time, 5):08.5f} \
-                    {round(total_time, 5):09.5f} {batch_norm:14.5f} \
-                        {round(error_before_update, 5):0.5f} \
-                            {round(error_after_update, 5):0.5f} \
-                                {round(dataset.compression_ratio, 5):09.5f} \
-                                    {round(np.mean(val_errors),5):0.5f} \
-                                        {round(np.mean(test_errors),5):0.5f} \
-                                            {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+            f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d} {frame_counter:4d} {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compression_ratio, 5):09.5f} {round(np.mean(val_errors),5):0.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
         )
         batch_index += 1
 
@@ -497,15 +481,7 @@ def main(args):
                 wandb.log(logging_dict)
 
             print(
-                f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d} \
-                    {frame_counter:4d} {round(batch_time, 5):08.5f} \
-                        {round(total_time, 5):09.5f} {batch_norm:14.5f} \
-                            {round(error_before_update, 5):0.5f} \
-                                {round(error_after_update, 5):0.5f} \
-                                    {round(dataset.compression_ratio, 5):09.5f} \
-                                        {round(np.mean(val_errors),5):0.5f} \
-                                            {round(np.mean(test_errors),5):0.5f} \
-                                                {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+                f"{batch_index:6d} {total_frame_counter:6d} {video_counter:3d} {frame_counter:4d} {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compression_ratio, 5):09.5f} {round(np.mean(val_errors),5):0.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
             )
             batch_index += 1
 

@@ -81,14 +81,24 @@ def compress_catgel_full_sim_TT(args):
     error_after_update = nla.norm(rec - training_snapshot) / batch_norm
 
     test_errors = []
+    for simulation in test_simulations[:]:
+        test_snapshot = np.load(simulation)
+        for state_idx in range(test_snapshot.shape[-1]):
+            test_snapshot[..., state_idx], _, _ = normalize(
+                test_snapshot[..., state_idx], method=args.normalization
+            )
+        test_snapshot = test_snapshot.transpose(0, 1, 2, 4, 3)[..., None]
+        rec = dataset.reconstruct(
+            dataset.projectTensor(
+                test_snapshot,
+            )
+        ).squeeze(0)
+        approximation_error = nla.norm(rec - test_snapshot) / nla.norm(test_snapshot)
+        test_errors.append(approximation_error)
 
     ranks = dataset.ttRanks[1:-1].copy()
     print(
-        f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} {round(batch_time, 5):09.5f} \
-            {round(total_time, 5):10.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} \
-                {round(error_after_update, 5):0.5f} {round(dataset.compressionRatio, 5):09.5f} \
-                    {round(np.mean(test_errors),5):0.5f} \
-                        {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+        f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} {round(batch_time, 5):09.5f} {round(total_time, 5):10.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compressionRatio, 5):09.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
     )
 
     if args.wandb:
@@ -165,13 +175,7 @@ def compress_catgel_full_sim_TT(args):
 
         previous_ranks = dataset.ttRanks.copy()
         print(
-            f"{batch_index:04d} {dataset.ttCores[-1].shape[-1]:06d} \
-                {round(batch_time, 5):09.5f} {round(total_time, 5):10.5f} \
-                    {batch_norm:14.5f} {round(error_before_update, 5):0.5f} \
-                        {round(error_after_update, 5):0.5f} \
-                            {round(dataset.compressionRatio, 5):09.5f} \
-                                {round(np.mean(test_errors),5):0.5f} \
-                                    {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+            f"{batch_index:04d} {dataset.ttCores[-1].shape[-1]:06d} {round(batch_time, 5):09.5f} {round(total_time, 5):10.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compressionRatio, 5):09.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
         )
         if args.wandb:
             logging_dict = {

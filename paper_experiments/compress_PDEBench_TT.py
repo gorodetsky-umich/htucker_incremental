@@ -300,14 +300,7 @@ def numpy_combine(args):
     # for leaf in dataset.leaves:
     #     ranks.append(leaf.shape[-1])
     print(
-        f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} \
-            {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} \
-                {batch_norm:14.5f} {round(error_before_update, 5):0.5f} \
-                    {round(error_after_update, 5):0.5f} \
-                        {round(dataset.compressionRatio, 5):09.5f} \
-                            {round(np.mean(val_errors),5):0.5f} \
-                                {round(np.mean(test_errors),5):0.5f} \
-                                    {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+        f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compressionRatio, 5):09.5f} {round(np.mean(val_errors),5):0.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
     )
 
     # ADDED SAVING TO EXTRACT TURBULENCE SPECTRUM #
@@ -460,14 +453,7 @@ def numpy_combine(args):
             #     ranks.append(leaf.shape[-1])
         previous_ranks = dataset.ttRanks.copy()
         print(
-            f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} \
-                {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} \
-                    {batch_norm:14.5f} {round(error_before_update, 5):0.5f} \
-                        {round(error_after_update, 5):0.5f} \
-                            {round(dataset.compressionRatio, 5):09.5f} \
-                                {round(np.mean(val_errors),5):0.5f} \
-                                    {round(np.mean(test_errors),5):0.5f} \
-                                        {' '.join(map(lambda x: f'{x:03d}', ranks))}"
+            f"{batch_index:04d} {dataset.ttCores[-1].shape[1]:06d} {round(batch_time, 5):08.5f} {round(total_time, 5):09.5f} {batch_norm:14.5f} {round(error_before_update, 5):0.5f} {round(error_after_update, 5):0.5f} {round(dataset.compressionRatio, 5):09.5f} {round(np.mean(test_errors),5):0.5f} {' '.join(map(lambda x: f'{x:03d}', ranks))}"  # noqa: E501
         )
         if args.wandb:
             logging_dict = {
