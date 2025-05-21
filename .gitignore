@@ -36,6 +36,7 @@ MsPacmanNoFrameskip-v4/*
 metrics/*
 frames/
 wandb/
+terminalOutputs/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -49,8 +50,4 @@ wandb/
 *.hto
 *.txt
 wandb/
-<<<<<<< HEAD
-*.slurm
-=======
 S2A_MSIL2A*
->>>>>>> refs/remotes/origin/master
