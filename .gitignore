@@ -1,20 +1,53 @@
-build*
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
 *~
-*.pyc
-*.egg-info*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Project specific
 htucker/bin/*
 htucker/lib*/*
 htucker/share/*
 MsPacmanNoFrameskip-v4/*
 metrics/*
-.env/
 frames/
+wandb/
+terminalOutputs/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files
+*.npy
+*.npz
+*.hdf5
+*.h5
 *.mp4
 *.hto
 *.txt
 wandb/
-<<<<<<< HEAD
-*.slurm
-=======
 S2A_MSIL2A*
->>>>>>> refs/remotes/origin/master

@@ -1,1 +1,7 @@
-* Graph Structure Learning
+#+TITLE: HTucker - Hierarchical Tucker Tensor Decomposition
+#+AUTHOR: Doruk Aksoy, Alex Gorodetsky
+
+* Hierarchical Tucker Tensor Decomposition
+
+HTucker is a Python library for Hierarchical Tucker (HT) tensor decomposition. The library supports
+both standard Hierarchical Tucker decomposition and extensions for incremental/batch tensor processing.

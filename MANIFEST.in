@@ -1,0 +1,19 @@
+include LICENSE
+include README.org
+include requirements.txt
+
+recursive-include htucker/tests *.py
+
+# Documentation
+recursive-include docs *.pdf
+recursive-include docs *.rst
+recursive-include docs *.py
+recursive-include docs *.ipynb
+recursive-include docs Makefile
+
+# Examples
+recursive-include examples *.py
+recursive-include examples *.ipynb
+
+# Exclude
+global-exclude *.py[cod] __pycache__/* *.so *.dylib
