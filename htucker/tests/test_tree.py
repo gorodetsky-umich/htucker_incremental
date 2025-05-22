@@ -85,6 +85,8 @@ class TestTree(unittest.TestCase):
         self.tree.insertNode([2], parent2)
         self.tree.insertNode([3], parent2)
 
+        # Get the max depth of the tree
+        self.tree.get_max_depth()
         # Get items from level
         self.tree.get_items_from_level()
 
