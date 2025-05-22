@@ -77,7 +77,7 @@ For detailed information about pre-commit, see [docs/pre-commit-guide.md](docs/p
 
 
 ## Documentation
-- Main documentation: [`README.org`](../README.org)
+- Main documentation: [`README.org`](./README.org)
 - Scientific paper: [Incremental Hierarchical Tucker Decomposition](https://arxiv.org/abs/2412.16544)
 
 ## Citing
